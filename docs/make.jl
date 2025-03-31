@@ -1,6 +1,6 @@
 using Documenter, ColdAtoms
 
-makedocs()
+makedocs(sitename="ColdAtoms.jl")
 
 deploydocs(
     repo = "https://github.com/mgoloshchapov/ColdAtoms.jl",

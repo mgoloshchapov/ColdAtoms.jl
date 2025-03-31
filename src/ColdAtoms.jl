@@ -1,6 +1,6 @@
 module ColdAtoms
 
-using PyPlot
+# using PyPlot
 using Statistics, Distributions, Random
 using PhysicalConstants.CODATA2018: c_0, k_B, m_u
 using Unitful
@@ -13,7 +13,7 @@ using Interpolations
 export 
     w0_to_z0, trap_frequencies, E, I,
     release_recapture,
-    samples_generate, samples_visualise, R, V, get_trap_params, H,
+    samples_generate, R, V, get_trap_params, H, samples_visualise,
     Sϕ, ϕ_amplitudes, ϕ,
     simulation, Ω_twophoton, T_twophoton, δ_twophoton, Ωr_required, 
     g, p, r, gt
