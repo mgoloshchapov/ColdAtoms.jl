@@ -35,7 +35,7 @@ Simulate release and recapture experiment to estimate atom's temperature.
 ### Input
 
 - `tspan` -- vector specifying the points of time for which output should be displayed
-- `trap_params` -- vector [trap depth U0 in ``\\mu K``, beam waist radius in ``\\mu m``, beam Rayleigh length in ``\\mu m``]
+- `trap_params` -- vector [trap depth ``U_{0}`` in ``\\mu K``, beam waist radius in ``\\mu m``, beam Rayleigh length in ``\\mu m``]
 - `atom_params` -- vector [atom mass in a.u., atom temperature in ``\\mu K``]
 - `N` -- number of Monte-Carlo samples, the same as number of atoms
 - `freq` -- (optional, default: `10`) number of Metropolis steps skipped between samples to reduce sample dependency
