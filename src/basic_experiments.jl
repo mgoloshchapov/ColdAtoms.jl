@@ -34,6 +34,27 @@ function release_evolve(tspan, cord, atom_params, trap_params; eps=1e-3)
 end; 
 
 
+"""
+    release_recapture(tspan, trap_params, atom_params, N; freq=10, skip=1000, eps=1e-3, harmonic=true)
+
+Simulate release and recapture experiment to estimate atom's temperature.
+
+### Input
+
+- `tspan` -- vector specifying the points of time for which output should be displayed
+- `trap_params` -- vector [trap depth U0 in ``\mu K``, beam waist radius in ``\mu m``, beam Rayleigh length in ``\mu m``]
+- `atom_params` -- vector [atom mass in a.u., atom temperature in ``\mu K``]
+- `N` -- number of Monte-Carlo samples, the same as number of atoms
+- `freq` -- (optional, default: `10`) number of Metropolis steps skipped between samples to reduce sample dependency
+- `skip` -- (optional, default: `1000`) number of Metropolis steps skipped before the Markov Chain is considered to reach stationary distribution
+- `eps` -- (optional, default: `1e-3`) cutoff to regularize Metropolis sampler, atoms that have energy over ``U_{0}(1-eps)`` are considered to be out of trap
+- `harmonic` -- (optional, default: `true`) uses harmonic approximation of gaussian beam if set to `true`, otherwise uses Metropolis sampler
+
+### Output
+
+List of recapture probabilities corresponding to times in `tspan` and acceptance rate of Metropolis algorithm. 
+If `harmonic` is set to `true`, acceptance rate is set to 1.0. 
+"""
 function release_recapture(tspan, trap_params, atom_params, N; freq=10, skip=1000, eps=1e-3, harmonic=true)
     samples, acc_rate = samples_generate(trap_params, atom_params, N; freq=freq, skip=skip, harmonic=harmonic);
     recapture = zeros(length(tspan));
@@ -44,14 +65,3 @@ function release_recapture(tspan, trap_params, atom_params, N; freq=10, skip=100
     
     return recapture ./ N, acc_rate
 end;
-# function release_recapture_antitrapping(tspan, trap_params, atom_params, α, N; freq=10, skip=1000)
-#     samples, acc_rate = boltzmann_samples(trap_params, atom_params, N; freq=freq, skip=skip);
-    
-#     recapture = zeros(length(tspan));
-    
-#     for i ∈ 1:N
-#         recapture += evolve(tspan, samples[i], atom_params, trap_params);
-#     end;
-    
-#     return recapture ./ N, acc_rate
-# end;
