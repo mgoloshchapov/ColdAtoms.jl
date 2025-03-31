@@ -1,10 +1,3 @@
-"""
-trap_params: [U0(μK), w0(μm), z0(μm)]
-atom_params: [m(a.u.), T(μK)], T is used as initial guess for temperature
-tspan      : time from experiment(in μs)
-probability: probability to recapture atom from experiment
-"""
-
 function is_zero(x)
     return x == 0
 end;
@@ -42,8 +35,8 @@ Simulate release and recapture experiment to estimate atom's temperature.
 ### Input
 
 - `tspan` -- vector specifying the points of time for which output should be displayed
-- `trap_params` -- vector [trap depth U0 in ``\mu K``, beam waist radius in ``\mu m``, beam Rayleigh length in ``\mu m``]
-- `atom_params` -- vector [atom mass in a.u., atom temperature in ``\mu K``]
+- `trap_params` -- vector [trap depth U0 in ``\\mu K``, beam waist radius in ``\\mu m``, beam Rayleigh length in ``\\mu m``]
+- `atom_params` -- vector [atom mass in a.u., atom temperature in ``\\mu K``]
 - `N` -- number of Monte-Carlo samples, the same as number of atoms
 - `freq` -- (optional, default: `10`) number of Metropolis steps skipped between samples to reduce sample dependency
 - `skip` -- (optional, default: `1000`) number of Metropolis steps skipped before the Markov Chain is considered to reach stationary distribution
