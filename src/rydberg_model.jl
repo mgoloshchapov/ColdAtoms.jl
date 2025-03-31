@@ -226,23 +226,3 @@ end;
 function Ωr_required(Ω, Ωb, Δ)
     return 2.0 * Δ * Ω / Ωb
 end;
-
-
-function Ω_twophoton(Ωr, Ωb, Δ)
-    return Ωb * Ωr / (2.0 * Δ)
-end;
-
-
-function T_twophoton(Ωr, Ωb, Δ)
-    return 2.0*π / Ω_twophoton(Ωr, Ωb, Δ);
-end;
-
-
-function δ_twophoton(Ωr, Ωb, Δ)
-    return (Ωb^2 - Ωr^2)/(4.0 * Δ)
-end;
-
-
-function Ωr_required(Ω, Ωb, Δ)
-    return 2.0 * Δ * Ω / Ωb
-end;
