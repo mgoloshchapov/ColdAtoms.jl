@@ -11,9 +11,7 @@ const r0 = 1e-6;            #Characteristic distance in m
 #------------------------------------
 
 
-"""
-Functions
-"""
+
 #Potential energy in gaussian beam
 function Π(cord, trap_params)
     U0, w0, z0 = trap_params;
@@ -60,7 +58,7 @@ end;
 
 
 """
-    samples_generate(trap_params, atom_params, N; <keyword arguments>)
+    samples_generate(trap_params, atom_params, N; freq=10, skip=1000, harmonic=true)
 
 Generate Monte-Carlo samples of initial atom coordinates and velocities
 
@@ -76,7 +74,8 @@ Generate Monte-Carlo samples of initial atom coordinates and velocities
 ### Output
 
 Vector of Monte-Carlo samples ``[x_{i}, y_{i}, z_{i}, vx_{i}, vy_{i}, vz_{i}]`` and acceptance rate of Metropolis sampler.
-If `harmonic` set to `true`, acceptance rate is set to `1.0`.
+If `harmonic` set to `true`, acceptance rate is set to `1.0`
+
 """
 function samples_generate(trap_params, atom_params, N; freq=10, skip=1000, harmonic=true)
     U0, w0, z0 = trap_params;
@@ -148,7 +147,7 @@ end;
 
 
 """
-    get_trap_params(ωr, ωz, U0, λ; <keyword arguments>)
+    get_trap_params(ωr, ωz, U0, λ; m = 87.0, dif=true)
 
 Get trap parameters given trap frequencies, depth and wavelength. 
 
@@ -165,6 +164,7 @@ Trap is assumed to be formed by gaussian beam with equal radial oscillation freq
 ### Output
 
 Vector of trap parameters [`w0`, `z0`, `U`]
+
 """
 function get_trap_params(ωr, ωz, U0, λ; m = 87.0, dif=true)
     if dif

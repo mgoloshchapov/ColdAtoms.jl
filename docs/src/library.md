@@ -1,6 +1,6 @@
 # ColdAtoms.jl Documentation
 
-```@autodocs
+<!-- ```@autodocs
 Modules = [ColdAtoms]
 Pages = ["basic_experiments.jl"]
-```
+``` -->

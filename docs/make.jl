@@ -1,13 +1,14 @@
 using Documenter, ColdAtoms
 
+push!(LOAD_PATH,"../src/")
+
 makedocs(
     modules=[ColdAtoms],
     sitename="ColdAtoms.jl",
     authors="M.Y. Goloshchapov",
+    repo = Remotes.GitHub("mgoloshchapov", "ColdAtoms.jl"),
     pages = [
-        "Home" => "index.md",
-        "Examples" => "examples.md",
-        "API" => "library.md"
+        "Home" => "index.md"
     ]
     )
 

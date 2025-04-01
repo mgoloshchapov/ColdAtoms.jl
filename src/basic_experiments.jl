@@ -20,6 +20,7 @@ Simulates evolution of atoms after turning the trap off and recapture results
 
 Binary list of length tspan, which contains 1 at idx ``i`` if atom is recaptured at `tspan[i]` 
 and 0 otherwise
+
 """
 function release_evolve(tspan, cord, atom_params, trap_params; eps=1e-3)
     xi, yi, zi, vxi, vyi, vzi = cord;
@@ -64,7 +65,8 @@ Simulate release and recapture experiment to estimate atom's temperature.
 ### Output
 
 List of recapture probabilities corresponding to times in `tspan` and acceptance rate of Metropolis algorithm. 
-If `harmonic` is set to `true`, acceptance rate is set to 1.0. 
+If `harmonic` is set to `true`, acceptance rate is set to 1.0
+
 """
 function release_recapture(tspan, trap_params, atom_params, N; freq=10, skip=1000, eps=1e-3, harmonic=true)
     samples, acc_rate = samples_generate(trap_params, atom_params, N; freq=freq, skip=skip, harmonic=harmonic);

@@ -82,9 +82,6 @@ end;
 
 
 #Jump operators for master equation 
-"""
-decay_params: [Γg, Γgt]
-"""
 function JumpOperators(decay_params)
     Γg, Γgt = decay_params;
     return [sqrt(Γg)*σgp, sqrt(Γgt)*σgtp], [sqrt(Γg)*σpg, sqrt(Γgt)*σpgt]
@@ -95,21 +92,16 @@ end;
 """
     simulation(
         tspan, ψ0, 
-            
         atom_params,
         trap_params,
         samples,
-        
         f,
         red_laser_phase_amplitudes,
         blue_laser_phase_amplitudes,
-        
         red_laser_params,
         blue_laser_params,
-        
         detuning_params,
         decay_params;
-
         atom_motion=true,
         free_motion=true,
         laser_noise=true,
@@ -125,16 +117,25 @@ Simulate two-photon Rydberg excitation of single atom with several sources of de
 - `atom_params` -- vector [atom mass in a.u., atom temperature in ``\\mu K``]
 - `trap_params` -- vector [trap depth ``U_{0}`` in ``\\mu K``, beam waist radius in ``\\mu m``, beam Rayleigh length in ``\\mu m``]
 - `samples` -- Monte-Carlo samples of initial atom coordinates and velocities, can be received using samples_generate
-- `N` -- number of Monte-Carlo samples, the same as number of atoms
-- `freq` -- (optional, default: `10`) number of Metropolis steps skipped between samples to reduce sample dependency
-- `skip` -- (optional, default: `1000`) number of Metropolis steps skipped before the Markov Chain is considered to reach stationary distribution
-- `eps` -- (optional, default: `1e-3`) cutoff to regularize Metropolis sampler, atoms that have energy over ``U_{0}(1-eps)`` are considered to be out of trap
-- `harmonic` -- (optional, default: `true`) uses harmonic approximation of gaussian beam if set to `true`, otherwise uses Metropolis sampler
+- `f` -- frequencies at which laser phase noise is sampled
+- `red_laser_phase_amplitudes` -- amplitudes of red laser phase noise for correspoding frequencies `f`
+- `blue_laser_phase_amplitudes` -- amplitudes of blue laser phase noise for correspoding frequencies `f`
+- `red_laser_params` -- write explanation
+- `blue_laser_params` -- write explanation
+- `detuning_params` -- vector [Δ0, δ0], which sets detuning from intermediate level and Rydberg level correspondingly
+- `decay_params` -- write explanation
+- `atom_motion` -- (optional, default: `true`) if set to true, atom motion is included
+- `free_motion` -- (optional, default: `true`) if set to true, trap is turned off
+- `laser_noise` -- (optional, default: `true`) if set to true, laser phase noise is included
+- `spontaneous_decay` -- (optional, default: `true`) if set to true, spontaneous decay from intermediate level is included
+- `parallel` -- (optional, default: `false`) parallel implementation is under development
+
 
 ### Output
 
-List of recapture probabilities corresponding to times in `tspan` and acceptance rate of Metropolis algorithm. 
-If `harmonic` is set to `true`, acceptance rate is set to 1.0. 
+Outputs Monte-Carlo averaged density matrix and squared density matrix for error calculation
+with elements ordered in correspondence with order ground, intermediate, Rydberg
+
 """
 function simulation(
     tspan, ψ0, 
