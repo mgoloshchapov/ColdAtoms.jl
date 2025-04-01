@@ -11,7 +11,6 @@ PhysicalConstants = "5ad8b20f-a522-5ce9-bfc9-ddf1d5bda6ab"
 QuantumOptics = "6e0679c1-51ea-5a7c-ac74-d61b76210b0c"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 SplitApplyCombine = "03a91e81-4c3e-53e1-a0a4-9c0c8f19dd66"
-Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 
 [compat]
@@ -22,7 +21,6 @@ PhysicalConstants = "0.2.4"
 QuantumOptics = "1.2.2"
 Random = "1.11.0"
 SplitApplyCombine = "1.2.3"
-Statistics = "1.11.1"
 Unitful = "1.22.0"
 julia = "1.6.7"
 
