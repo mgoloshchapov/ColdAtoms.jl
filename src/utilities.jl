@@ -6,19 +6,19 @@ end;
 
 
 """
-    w0_to_z0(w0, λ, M2=1.0)
+    w0_to_z0(w0, λ, M2)
 
-Return Rayleigh length given beam waist radius `w0`, wavelength ``\\lambda`` and `M2` parameter.
+Return Rayleigh length given beam waist radius `w0`, wavelength `λ` and `M2` parameter.
 
 ### Input
 
-- `w0` -- beam waist radius in ``\\mu m``
-- `λ` -- beam wavelength in ``\\mu m``
+- `w0` -- beam waist radius in ``μm``
+- `λ` -- beam wavelength in ``μm``
 - `M2` -- (optional, default: `1.0`) M2 parameter of beam. For ideal Gaussian beam M2=1.0
 
 ### Output
 
-Rayleigh length in ``\\mu m``
+Rayleigh length in ``μm``
 """
 function w0_to_z0(w0, λ, M2=1.0)
     return π*w0^2/λ / M2;
@@ -55,23 +55,17 @@ end;
 """
     trap_frequencies(atom_params, trap_params)
 
-Calculates 
+Calculates trap frequencies from atom and trap parameters 
 
 ### Input
 
-- `tspan` -- vector specifying the points of time for which output should be displayed
-- `trap_params` -- vector [trap depth ``U_{0}`` in ``\\mu K``, beam waist radius in ``\\mu m``, beam Rayleigh length in ``\\mu m``]
 - `atom_params` -- vector [atom mass in a.u., atom temperature in ``\\mu K``]
-- `N` -- number of Monte-Carlo samples, the same as number of atoms
-- `freq` -- (optional, default: `10`) number of Metropolis steps skipped between samples to reduce sample dependency
-- `skip` -- (optional, default: `1000`) number of Metropolis steps skipped before the Markov Chain is considered to reach stationary distribution
-- `eps` -- (optional, default: `1e-3`) cutoff to regularize Metropolis sampler, atoms that have energy over ``U_{0}(1-eps)`` are considered to be out of trap
-- `harmonic` -- (optional, default: `true`) uses harmonic approximation of gaussian beam if set to `true`, otherwise uses Metropolis sampler
+- `trap_params` -- vector [trap depth ``U_{0}`` in ``\\mu K``, beam waist radius in ``\\mu m``, beam Rayleigh length in ``\\mu m``]
 
 ### Output
 
-List of recapture probabilities corresponding to times in `tspan` and acceptance rate of Metropolis algorithm. 
-If `harmonic` is set to `true`, acceptance rate is set to 1.0. 
+Vector of radial and longitudinal trap frequencies [`ωr`, `ωz`]
+
 """
 function trap_frequencies(atom_params, trap_params)
     m, T = atom_params;
