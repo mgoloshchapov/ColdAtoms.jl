@@ -35,7 +35,7 @@ end;
 function ϕ(tspan, f, amplitudes)
     N = length(f);
     ϕf = rand(Uniform(0.0, 2.0*π), N); #generate random phases for components
-    res = vec(sum(amplitudes .* cos.(2*π * f .* tspan' .+ ϕf),dims=1));
+    res = vec(sum(amplitudes .* cos.(2*π * f .* tspan' .+ ϕf), dims=1));
 
     return res
 end;

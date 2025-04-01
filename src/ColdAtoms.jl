@@ -1,7 +1,7 @@
 module ColdAtoms
 
 # using PyPlot
-using Statistics, Distributions, Random
+using Distributions, Random
 using PhysicalConstants.CODATA2018: c_0, k_B, m_u
 using Unitful
 using LinearAlgebra
