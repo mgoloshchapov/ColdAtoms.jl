@@ -1,4 +1,4 @@
-![logo](https://github.com/mgoloshchapov/ColdAtoms.jl/blob/main/docs/assets/logo.png)
+<img src="https://github.com/mgoloshchapov/ColdAtoms.jl/blob/main/docs/src/assets/logo.png" alt="logo" width="150" height="165">
 
 # ColdAtoms.jl
 
