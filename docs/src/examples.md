@@ -8,7 +8,7 @@ The trap is turned off by a variable amount of time and probability to recapture
 
 ```@example
 using ColdAtoms
-using PyPlot
+using Plots
 
 # Atom and trap parameters
 U0, w0, λ, M2 = 1000.0, 1.1, 0.852, 1.3;
@@ -30,9 +30,5 @@ probs, acc_rate = ColdAtoms.release_recapture(
     harmonic=false);
 
 # Plot release and recapture curve
-figure(figsize=(6,4))
-plot(tspan, probs, color="red", linewidth=2)
-xlabel(L"Time, $\mu s$")
-ylabel("Recapture probability")
-gcf()
+plot!(tspan, probs)
 ```
