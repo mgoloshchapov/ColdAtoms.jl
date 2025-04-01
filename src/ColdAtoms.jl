@@ -6,7 +6,7 @@ using PhysicalConstants.CODATA2018: c_0, k_B, m_u
 using Unitful
 using LinearAlgebra
 using QuantumOptics
-using DifferentialEquations
+# using DifferentialEquations
 using SplitApplyCombine
 using Interpolations
 
