@@ -19,9 +19,6 @@ const operators = [np, nr, σgp, σpg, σpr, σrp];
 
 
 #Due to atom dynamics
-"""
-laser_params: [Ω₀, w₀, z₀]
-"""
 function Ω(x, y, z, laser_params)
     Ω0, w0, z0 = laser_params;
     return Ω0 .* A(x, y, z, w0, z0) .* A_phase(x, y, z, w0, z0);
@@ -114,6 +111,7 @@ Simulate two-photon Rydberg excitation of single atom with several sources of de
 ### Input
 
 - `tspan` -- vector specifying the points of time for which output should be displayed
+- `ψ0` -- initial wavefunction vector of normalized complex amplitudes ``[c_{g}, c_{p}, c_{r}]``
 - `atom_params` -- vector [atom mass in a.u., atom temperature in ``\\mu K``]
 - `trap_params` -- vector [trap depth ``U_{0}`` in ``\\mu K``, beam waist radius in ``\\mu m``, beam Rayleigh length in ``\\mu m``]
 - `samples` -- Monte-Carlo samples of initial atom coordinates and velocities, can be received using samples_generate

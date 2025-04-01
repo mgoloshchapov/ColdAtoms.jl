@@ -2,10 +2,5 @@
 
 ```@autodocs
 Modules = [ColdAtoms]
-Pages = ["basic_experiments.jl"]
-```
-
-```@autodocs
-Modules = [ColdAtoms]
-Pages = ["ryderg_model.jl"]
+Pages = ["basic_experiments.jl", "rydberg_model.jl"]
 ```
