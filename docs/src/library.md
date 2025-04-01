@@ -4,7 +4,7 @@
 release_recapture(tspan, trap_params, atom_params, N; <keyword arguments>)
 ```
 
-```@docs
+<!-- ```@docs
 w0_to_z0(w0, λ, M2)
 ```
 
@@ -32,4 +32,4 @@ simulation(
 
         <keyword arguments>
         )
-```
+``` -->
