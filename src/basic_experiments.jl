@@ -2,7 +2,25 @@ function is_zero(x)
     return x == 0
 end;
 
+"""
+    release_evolve(tspan, cord, atom_params, trap_params; eps=1e-3)
 
+Simulates evolution of atoms after turning the trap off and recapture results
+
+### Input
+
+- `tspan` -- vector specifying the points of time for which output should be displayed
+- `cord` -- vector of initial coordiantes and velocities ``[x,y,z,v_{x},v_{y},v_{z}]``
+- `atom_params` -- vector [atom mass in a.u., atom temperature in ``\\mu K``]
+- `trap_params` -- vector [trap depth ``U_{0}`` in ``\\mu K``, beam waist radius in ``\\mu m``, beam Rayleigh length in ``\\mu m``]
+- `eps` -- (optional, default: `1e-3`) cutoff to regularize Metropolis sampler, atoms that have energy over ``U_{0}(1-eps)`` are considered to be out of trap
+
+
+### Output
+
+Binary list of length tspan, which contains 1 at idx ``i`` if atom is recaptured at `tspan[i]` 
+and 0 otherwise
+"""
 function release_evolve(tspan, cord, atom_params, trap_params; eps=1e-3)
     xi, yi, zi, vxi, vyi, vzi = cord;
     m, T = atom_params;
@@ -28,7 +46,7 @@ end;
 
 
 """
-    release_recapture(tspan, trap_params, atom_params, N; <keyword arguments>)
+    release_recapture(tspan, trap_params, atom_params, N; freq=10, skip=1000, eps=1e-3, harmonic=true)
 
 Simulate release and recapture experiment to estimate atom's temperature.
 

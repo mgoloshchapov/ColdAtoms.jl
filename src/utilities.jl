@@ -6,7 +6,7 @@ end;
 
 
 """
-    w0_to_z0(w0, λ, M2)
+    w0_to_z0(w0, λ, M2=1.0)
 
 Return Rayleigh length given beam waist radius `w0`, wavelength `λ` and `M2` parameter.
 

@@ -95,7 +95,7 @@ end;
 """
     simulation(
         tspan, ψ0, 
-        
+            
         atom_params,
         trap_params,
         samples,
@@ -110,7 +110,11 @@ end;
         detuning_params,
         decay_params;
 
-        <keyword arguments>
+        atom_motion=true,
+        free_motion=true,
+        laser_noise=true,
+        spontaneous_decay=true,
+        parallel=false
         )
 
 Simulate two-photon Rydberg excitation of single atom with several sources of decoherence
