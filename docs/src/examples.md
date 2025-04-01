@@ -4,7 +4,6 @@
 
 ```@example
 using ColdAtoms
-using PyPlot
 
 # Atom and trap parameters
 U0, w0, λ, M2 = 1000.0, 1.1, 0.852, 1.3;
@@ -24,7 +23,4 @@ probs, acc_rate = ColdAtoms.release_recapture(
     atom_params, 
     N; 
     harmonic=false);
-
-figure()
-plot(tspan, probs)
 ```
