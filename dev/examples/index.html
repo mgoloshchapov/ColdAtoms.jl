@@ -1,20 +1,20 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Examples · ColdAtoms.jl</title><meta name="title" content="Examples · ColdAtoms.jl"/><meta property="og:title" content="Examples · ColdAtoms.jl"/><meta property="twitter:title" content="Examples · ColdAtoms.jl"/><meta name="description" content="Documentation for ColdAtoms.jl."/><meta property="og:description" content="Documentation for ColdAtoms.jl."/><meta property="twitter:description" content="Documentation for ColdAtoms.jl."/><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../search_index.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script><link href="../assets/logo.ico" rel="icon" type="image/x-icon"/></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../"><img src="../assets/logo.svg" alt="ColdAtoms.jl logo"/></a><div class="docs-package-name"><span class="docs-autofit"><a href="../">ColdAtoms.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li class="is-active"><a class="tocitem" href>Examples</a><ul class="internal"><li><a class="tocitem" href="#Release-and-recapture-experiment"><span>Release and recapture experiment</span></a></li></ul></li><li><a class="tocitem" href="../library/">API</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Examples</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Examples</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/mgoloshchapov/ColdAtoms.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/mgoloshchapov/ColdAtoms.jl/blob/main/docs/src/examples.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Examples"><a class="docs-heading-anchor" href="#Examples">Examples</a><a id="Examples-1"></a><a class="docs-heading-anchor-permalink" href="#Examples" title="Permalink"></a></h1><h2 id="Release-and-recapture-experiment"><a class="docs-heading-anchor" href="#Release-and-recapture-experiment">Release and recapture experiment</a><a id="Release-and-recapture-experiment-1"></a><a class="docs-heading-anchor-permalink" href="#Release-and-recapture-experiment" title="Permalink"></a></h2><p>Release and recapture method is used to measure temperature of single neutral atom in optical trap formed by gaussian beam. </p><p>The trap is turned off by a variable amount of time and probability to recapture atom is measured. If we know atom mass and trap parameters, we can extract atom temperature by comparing experimental release and recapture curve with the modelling.</p><pre><code class="language-julia hljs">using ColdAtoms
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Examples · ColdAtoms.jl</title><meta name="title" content="Examples · ColdAtoms.jl"/><meta property="og:title" content="Examples · ColdAtoms.jl"/><meta property="twitter:title" content="Examples · ColdAtoms.jl"/><meta name="description" content="Documentation for ColdAtoms.jl."/><meta property="og:description" content="Documentation for ColdAtoms.jl."/><meta property="twitter:description" content="Documentation for ColdAtoms.jl."/><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../search_index.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script><link href="../assets/logo.ico" rel="icon" type="image/x-icon"/></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../"><img src="../assets/logo.svg" alt="ColdAtoms.jl logo"/></a><div class="docs-package-name"><span class="docs-autofit"><a href="../">ColdAtoms.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li class="is-active"><a class="tocitem" href>Examples</a><ul class="internal"><li><a class="tocitem" href="#Release-and-recapture-experiment"><span>Release and recapture experiment</span></a></li><li><a class="tocitem" href="#Two-photon-Rydberg-excitation"><span>Two-photon Rydberg excitation</span></a></li></ul></li><li><a class="tocitem" href="../library/">API</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Examples</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Examples</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/mgoloshchapov/ColdAtoms.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/mgoloshchapov/ColdAtoms.jl/blob/main/docs/src/examples.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Examples"><a class="docs-heading-anchor" href="#Examples">Examples</a><a id="Examples-1"></a><a class="docs-heading-anchor-permalink" href="#Examples" title="Permalink"></a></h1><h2 id="Release-and-recapture-experiment"><a class="docs-heading-anchor" href="#Release-and-recapture-experiment">Release and recapture experiment</a><a id="Release-and-recapture-experiment-1"></a><a class="docs-heading-anchor-permalink" href="#Release-and-recapture-experiment" title="Permalink"></a></h2><p>Release and recapture method is used to measure temperature of single neutral atom in optical trap formed by gaussian beam. </p><p>The trap is turned off by a variable amount of time and probability to recapture atom is measured. If we know atom mass and trap parameters, we can extract atom temperature by comparing experimental release and recapture curve with the modelling.</p><pre><code class="language-julia hljs">using ColdAtoms
 using Plots
 
 # Atom and trap parameters
 U0, w0, λ, M2 = 1000.0, 1.1, 0.852, 1.3;
-z0 = ColdAtoms.w0_to_z0(w0, λ, M2);
+z0 = w0_to_z0(w0, λ, M2);
 m, T = 86.9091835, 50.0;
 trap_params = [U0, w0, z0];
 atom_params = [m, T];
 
 # Simulation parameters
-tspan = [0.0:1.0:40.0;];
+tspan = [0.0:1.0:50.0;];
 N = 10000
 
 # Calculate recapture probabilities
-probs, acc_rate = ColdAtoms.release_recapture(
+probs, acc_rate = release_recapture(
     tspan,
     trap_params,
     atom_params,
@@ -22,4 +22,122 @@ probs, acc_rate = ColdAtoms.release_recapture(
     harmonic=false);
 
 # Plot release and recapture curve
-plot!(tspan, probs)</code></pre><img src="257819ee.svg" alt="Example block output"/></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« Home</a><a class="docs-footer-nextpage" href="../library/">API »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.10.0 on <span class="colophon-date" title="Tuesday 1 April 2025 20:32">Tuesday 1 April 2025</span>. Using Julia version 1.11.4.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+plot(tspan, probs, label=false, width=3, color=&quot;red&quot;)
+xlims!(0.0, 50.0)
+ylims!(0.0, 1.05)
+xlabel!(&quot;Time, μs&quot;)
+ylabel!(&quot;Recapture probability&quot;)</code></pre><img src="77c83dc0.svg" alt="Example block output"/><h2 id="Two-photon-Rydberg-excitation"><a class="docs-heading-anchor" href="#Two-photon-Rydberg-excitation">Two-photon Rydberg excitation</a><a id="Two-photon-Rydberg-excitation-1"></a><a class="docs-heading-anchor-permalink" href="#Two-photon-Rydberg-excitation" title="Permalink"></a></h2><p>Two-photon Rydberg excitation is used, for example, to implement native CZ gate on neutral atom quantum computers. Here we implement modelling of two-photon Rydberg excitation with different sources of decoherence: atom dynamics, laser phase noise, spontaneous decay from intermediate state. </p><pre><code class="language-julia hljs">using ColdAtoms
+using QuantumOptics
+using Plots
+
+
+#Rb87 mass in a.u.
+m = 86.9091835;
+
+#Params for laser phase noise
+h0 = 13.0 * 1e-6;    #MHz^2/MHz
+hg1 = 25.0 * 1e-6;   #MHz^2/MHz
+hg2 = 10.0e3 * 1e-6; #MHz^2/MHz
+fg1 = 130.0 * 1e-3;  #MHz
+fg2 = 234.0 * 1e-3;  #MHz
+σg1 = 18.0 * 1e-3;   #MHz
+σg2 = 1.5 * 1e-3;    #MHz
+
+red_laser_phase_params  = [h0, [hg1, hg2], [σg1, σg2], [fg1, fg2]];
+blue_laser_phase_params = [h0, [hg1, hg2], [σg1, σg2], [fg1, fg2]];
+f = [0.01:0.0025:1.0;];
+red_laser_phase_amplitudes = ϕ_amplitudes(f, red_laser_phase_params);
+blue_laser_phase_amplitudes = ϕ_amplitudes(f, blue_laser_phase_params);
+
+#Excitation beam parameters
+λr = 0.795;
+λb = 0.475;
+wr = 10.0;
+wb = 3.5;
+zr = w0_to_z0(wr, λr);
+zb = w0_to_z0(wr, λb);
+
+# Atom and trap parameters
+T = 50.0;
+U0 = 1000.0;
+w0 = 1.1;
+λ0 = 0.813;
+M2 = 1.3;
+z0 = w0_to_z0(w0, λ0, M2);
+atom_params = [m, T];
+trap_params = [U0, w0, z0];
+
+#Rabi frequencies
+Δ0 = 2.0*π * 904.0;
+Ωr = 2π * 60.0;
+Ωb = 2π * 60.0;
+blue_laser_params = [Ωb, wb, zb];
+red_laser_params = [Ωr, wr, zr];
+
+# Detunings and decay params
+detuning_params = [Δ0, δ_twophoton(Ωr, Ωb, Δ0)];
+Γ = 2.0*π * 6.0;
+decay_params = [Γ/4, 3*Γ/4];
+
+# Period of Rabi oscillations
+T0 = T_twophoton(Ωr, Ωb, Δ0);
+# Simulation time
+tspan = [0.0:T0/30:2.5*T0;];
+# Initial wavefunction
+ψ0 = g;
+
+
+
+# # Get initial atom coordinates and velocities
+N = 200;
+samples, acc_rate = samples_generate(trap_params, atom_params, N; skip=5000, freq=1000);
+
+
+
+# Calculate density matrix and it&#39;s squared values to estimate errors
+ρ_mean, ρ2_mean =
+    simulation(
+        tspan, ψ0,
+
+        atom_params,
+        trap_params,
+        samples,
+
+        f,
+        red_laser_phase_amplitudes,
+        blue_laser_phase_amplitudes,
+
+        red_laser_params,
+        blue_laser_params,
+
+        detuning_params,
+        decay_params;
+
+        spontaneous_decay=true,
+        atom_motion=true,
+        laser_noise=true,
+        parallel=false,
+        free_motion=true
+    );
+
+# Take average of state populations over density matrix
+Pg = real(expect(g ⊗ dagger(g), ρ_mean));
+Pp = real(expect(p ⊗ dagger(p), ρ_mean));
+Pr = real(expect(r ⊗ dagger(r), ρ_mean));
+
+
+
+# Plot Rabi oscillations
+plot(
+    tspan,
+    [Pg Pp Pr],
+    label=[&quot;Ground&quot; &quot;Intermediate&quot; &quot;Rydberg&quot;],
+    width=[3 3 3],
+    color=[&quot;blue&quot; &quot;gray&quot; &quot;red&quot;]
+    )
+plot!(legend=:outertop, legendcolumns=3)
+title!(&quot;State populations&quot;)
+xlims!(0.0, maximum(tspan))
+ylims!(0.0, 1.05)
+xlabel!(&quot;Time, μs&quot;)
+ylabel!(&quot;Probability&quot;)</code></pre><img src="8420a916.svg" alt="Example block output"/></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« Home</a><a class="docs-footer-nextpage" href="../library/">API »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.10.0 on <span class="colophon-date" title="Tuesday 1 April 2025 22:18">Tuesday 1 April 2025</span>. Using Julia version 1.11.4.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
