@@ -41,5 +41,8 @@ trap_params = [U0, w0, z0];
 Ωr = 2π * 60.0;
 Ωb = 2π * 60.0;
 blue_laser_params = [Ωb, wb, zb];
+red_laser_params = [Ωr, wr, zr];
+
+detuning_params = [Δ0, δ_twophoton(Ωr, Ωb, Δ0)];
 Γ = 2.0*π * 6.0;
 decay_params = [Γ/4, 3*Γ/4];
