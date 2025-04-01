@@ -1,7 +1,6 @@
 using Documenter, ColdAtoms
 
 makedocs(
-    modules=[ColdAtoms],
     sitename="ColdAtoms.jl",
     authors="M.Y. Goloshchapov",
     pages = [
