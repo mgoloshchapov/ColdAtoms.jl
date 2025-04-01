@@ -91,6 +91,47 @@ function JumpOperators(decay_params)
 end;
 
 
+
+"""
+    simulation(
+        tspan, ψ0, 
+        
+        atom_params,
+        trap_params,
+        samples,
+        
+        f,
+        red_laser_phase_amplitudes,
+        blue_laser_phase_amplitudes,
+        
+        red_laser_params,
+        blue_laser_params,
+        
+        detuning_params,
+        decay_params;
+
+        <keyword arguments>
+        )
+
+Simulate two-photon Rydberg excitation of single atom with several sources of decoherence
+
+### Input
+
+- `tspan` -- vector specifying the points of time for which output should be displayed
+- `atom_params` -- vector [atom mass in a.u., atom temperature in ``\\mu K``]
+- `trap_params` -- vector [trap depth ``U_{0}`` in ``\\mu K``, beam waist radius in ``\\mu m``, beam Rayleigh length in ``\\mu m``]
+- `samples` -- Monte-Carlo samples of initial atom coordinates and velocities, can be received using [`samples_generate`](@ref)
+- `N` -- number of Monte-Carlo samples, the same as number of atoms
+- `freq` -- (optional, default: `10`) number of Metropolis steps skipped between samples to reduce sample dependency
+- `skip` -- (optional, default: `1000`) number of Metropolis steps skipped before the Markov Chain is considered to reach stationary distribution
+- `eps` -- (optional, default: `1e-3`) cutoff to regularize Metropolis sampler, atoms that have energy over ``U_{0}(1-eps)`` are considered to be out of trap
+- `harmonic` -- (optional, default: `true`) uses harmonic approximation of gaussian beam if set to `true`, otherwise uses Metropolis sampler
+
+### Output
+
+List of recapture probabilities corresponding to times in `tspan` and acceptance rate of Metropolis algorithm. 
+If `harmonic` is set to `true`, acceptance rate is set to 1.0. 
+"""
 function simulation(
     tspan, ψ0, 
         

@@ -60,12 +60,23 @@ end;
 
 
 """
-trap_params: [U0(μK), w0(μm), z0(μm)]
-atom_params: [m(a.u.), T(μK)]
-N:            number of samples
-freq:         make step equal to freq between samples to reduce correlation between them in MCMC
-skip:         skip first samples, so Markov Chain can converge to desired distribution
-harmonic:     make harmonic approximation, false by default
+    samples_generate(trap_params, atom_params, N; <keyword arguments>)
+
+Generate Monte-Carlo samples of initial atom coordinates and velocities
+
+### Input
+
+- `trap_params` -- vector [trap depth ``U_{0}`` in ``\\mu K``, beam waist radius in ``\\mu m``, beam Rayleigh length in ``\\mu m``]
+- `atom_params` -- vector [atom mass in a.u., atom temperature in ``\\mu K``]
+- `N` -- number of Monte-Carlo samples, the same as number of atoms
+- `freq` -- (optional, default: `10`) number of Metropolis steps skipped between samples to reduce sample dependency
+- `skip` -- (optional, default: `1000`) number of Metropolis steps skipped before the Markov Chain is considered to reach stationary distribution
+- `harmonic` -- (optional, default: `true`) uses harmonic approximation of gaussian beam if set to `true`, otherwise uses Metropolis sampler
+
+### Output
+
+Vector of Monte-Carlo samples ``[x_{i}, y_{i}, z_{i}, vx_{i}, vy_{i}, vz_{i}]`` and acceptance rate of Metropolis sampler.
+If `harmonic` set to `true`, acceptance rate is set to `1.0`.
 """
 function samples_generate(trap_params, atom_params, N; freq=10, skip=1000, harmonic=true)
     U0, w0, z0 = trap_params;
@@ -136,6 +147,25 @@ function V(t, ri, vi, ω; free=false)
 end;       
 
 
+"""
+    get_trap_params(ωr, ωz, U0, λ; <keyword arguments>)
+
+Get trap parameters given trap frequencies, depth and wavelength. 
+
+Trap is assumed to be formed by gaussian beam with equal radial oscillation frequencies.
+
+### Input
+
+- `ωr` -- radial oscillation frequency in `MHz`
+- `ωr` -- longitudinal oscillation frequency in `MHz`
+- `U0` -- trap depth in `μK`
+- `λ` -- trap wavelength in `μm`
+- `m` -- atom mass in atomic units
+- `dif` -- (optional, default: `true`) if set to `true`, calculates trap parameters without using `U0` and outputs trap depth
+### Output
+
+Vector of trap parameters [`w0`, `z0`, `U`]
+"""
 function get_trap_params(ωr, ωz, U0, λ; m = 87.0, dif=true)
     if dif
         Δω = ωr - ωz;
