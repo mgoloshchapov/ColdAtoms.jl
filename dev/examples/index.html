@@ -26,16 +26,23 @@ plot(tspan, probs, label=false, width=3, color=&quot;red&quot;)
 xlims!(0.0, 50.0)
 ylims!(0.0, 1.05)
 xlabel!(&quot;Time, μs&quot;)
-ylabel!(&quot;Recapture probability&quot;)</code></pre><img src="ac2389c2.svg" alt="Example block output"/><h2 id="Two-photon-Rydberg-excitation"><a class="docs-heading-anchor" href="#Two-photon-Rydberg-excitation">Two-photon Rydberg excitation</a><a id="Two-photon-Rydberg-excitation-1"></a><a class="docs-heading-anchor-permalink" href="#Two-photon-Rydberg-excitation" title="Permalink"></a></h2><p>Two-photon Rydberg excitation is used, for example, to implement native CZ gate on neutral atom quantum computers. Here we implement modelling of two-photon Rydberg excitation with different sources of decoherence: atom dynamics, laser phase noise, spontaneous decay from intermediate state. </p><pre><code class="language-julia hljs">using ColdAtoms
+ylabel!(&quot;Recapture probability&quot;)</code></pre><img src="0c0944ea.svg" alt="Example block output"/><h2 id="Two-photon-Rydberg-excitation"><a class="docs-heading-anchor" href="#Two-photon-Rydberg-excitation">Two-photon Rydberg excitation</a><a id="Two-photon-Rydberg-excitation-1"></a><a class="docs-heading-anchor-permalink" href="#Two-photon-Rydberg-excitation" title="Permalink"></a></h2><p>Two-photon Rydberg excitation is used, for example, to implement native CZ gate on neutral atom quantum computers. Here we implement modelling of two-photon Rydberg excitation with different sources of decoherence: atom dynamics, laser phase noise, spontaneous decay from intermediate state. </p><p>Import necessary modules and specify atom and trap parameters. </p><pre><code class="language-julia hljs">using ColdAtoms
 using QuantumOptics
 using Plots
 
 
-#Rb87 mass in a.u.
 m = 86.9091835;
-
-#Params for laser phase noise
-h0 = 13.0 * 1e-6;    #MHz^2/MHz
+T = 50.0;
+U0 = 1000.0;
+w0 = 1.1;
+λ0 = 0.813;
+M2 = 1.3;
+z0 = w0_to_z0(w0, λ0, M2);
+atom_params = [m, T];
+trap_params = [U0, w0, z0];</code></pre><p>Let&#39;s now define parameters of laser phase noise. The model for realistic laser phase noise is decribed in <a href="https://arxiv.org/abs/2210.11007">this article</a> and consists of white noise and two servo bumps. The spectral density is described as</p><p class="math-container">\[\begin{aligned}
+    S_{\delta \nu}(f) = h_{0} &amp;+ h_{g1}\exp\left(-\frac{(f-f_{g1})^2}{2\sigma_{g1}^2} \right) + h_{g1}\exp\left(-\frac{(f+f_{g1})^2}{2\sigma_{g1}^2} \right) \\
+    &amp;+ h_{g2}\exp\left(-\frac{(f-f_{g2})^2}{2\sigma_{g2}^2} \right) + h_{g2}\exp\left(-\frac{(f+f_{g2})^2}{2\sigma_{g2}^2} \right).
+\end{aligned}\]</p><p>After the phase noise spectral density is defined and transformed to <span>$S_{\phi} = S_{\delta \nu}/f^{2}$</span>, we can sample laser phase noise trajectories as</p><p class="math-container">\[\phi(t) = \sum_{i} 2\sqrt{S_{\phi}(f_{i})\Delta f}\cos\left(2\pi f_{i} t + \varphi_{i}\right),\]</p><p>where phases <span>$\varphi_{i}$</span> are sampled from <span>$U[0,2\pi]$</span>.</p><pre><code class="language-julia hljs">h0 = 13.0 * 1e-6;    #MHz^2/MHz
 hg1 = 25.0 * 1e-6;   #MHz^2/MHz
 hg2 = 10.0e3 * 1e-6; #MHz^2/MHz
 fg1 = 130.0 * 1e-3;  #MHz
@@ -47,9 +54,7 @@ red_laser_phase_params  = [h0, [hg1, hg2], [σg1, σg2], [fg1, fg2]];
 blue_laser_phase_params = [h0, [hg1, hg2], [σg1, σg2], [fg1, fg2]];
 f = [0.01:0.0025:1.0;];
 red_laser_phase_amplitudes = ϕ_amplitudes(f, red_laser_phase_params);
-blue_laser_phase_amplitudes = ϕ_amplitudes(f, blue_laser_phase_params);
-
-#Excitation beam parameters
+blue_laser_phase_amplitudes = ϕ_amplitudes(f, blue_laser_phase_params);</code></pre><p>Here we define parameters of excitation beams, detunings and decay parameters.</p><pre><code class="language-julia hljs">#Excitation beam parameters
 λr = 0.795;
 λb = 0.475;
 wr = 10.0;
@@ -57,44 +62,22 @@ wb = 3.5;
 zr = w0_to_z0(wr, λr);
 zb = w0_to_z0(wr, λb);
 
-# Atom and trap parameters
-T = 50.0;
-U0 = 1000.0;
-w0 = 1.1;
-λ0 = 0.813;
-M2 = 1.3;
-z0 = w0_to_z0(w0, λ0, M2);
-atom_params = [m, T];
-trap_params = [U0, w0, z0];
-
 #Rabi frequencies
 Δ0 = 2.0*π * 904.0;
 Ωr = 2π * 60.0;
 Ωb = 2π * 60.0;
 blue_laser_params = [Ωb, wb, zb];
-red_laser_params = [Ωr, wr, zr];
-
-# Detunings and decay params
+red_laser_params = [Ωr, wr, zr];</code></pre><pre><code class="language-julia hljs"># Detunings and decay params
 detuning_params = [Δ0, δ_twophoton(Ωr, Ωb, Δ0)];
 Γ = 2.0*π * 6.0;
-decay_params = [Γ/4, 3*Γ/4];
-
-# Period of Rabi oscillations
+decay_params = [Γ/4, 3*Γ/4];</code></pre><p>Now let&#39;s define simulation time and draw samples of single atom in optical trap using Metropolis sampler. </p><pre><code class="language-julia hljs"># Period of Rabi oscillations
 T0 = T_twophoton(Ωr, Ωb, Δ0);
-# Simulation time
 tspan = [0.0:T0/30:2.5*T0;];
-# Initial wavefunction
-ψ0 = g;
 
-
-
-# # Get initial atom coordinates and velocities
+# Get initial atom coordinates and velocities
 N = 200;
-samples, acc_rate = samples_generate(trap_params, atom_params, N; skip=5000, freq=1000);
+samples, acc_rate = samples_generate(trap_params, atom_params, N; skip=5000, freq=1000);</code></pre><p>Finally, we are ready to run our simulation. As a result, we receive density matrix and its squared values for error estimation. </p><pre><code class="language-julia hljs">ψ0 = g;
 
-
-
-# Calculate density matrix and it&#39;s squared values to estimate errors
 ρ_mean, ρ2_mean =
     simulation(
         tspan, ψ0,
@@ -118,14 +101,10 @@ samples, acc_rate = samples_generate(trap_params, atom_params, N; skip=5000, fre
         laser_noise=true,
         parallel=false,
         free_motion=true
-    );
-
-# Take average of state populations over density matrix
+    );</code></pre><p>Now we can average density matrix over projectors on system states and plot Rabi oscillations. </p><pre><code class="language-julia hljs"># Take average of state populations over density matrix
 Pg = real(expect(g ⊗ dagger(g), ρ_mean));
 Pp = real(expect(p ⊗ dagger(p), ρ_mean));
 Pr = real(expect(r ⊗ dagger(r), ρ_mean));
-
-
 
 # Plot Rabi oscillations
 plot(
@@ -140,4 +119,4 @@ title!(&quot;State populations&quot;)
 xlims!(0.0, maximum(tspan))
 ylims!(0.0, 1.05)
 xlabel!(&quot;Time, μs&quot;)
-ylabel!(&quot;Probability&quot;)</code></pre><img src="6434c9da.svg" alt="Example block output"/></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« Home</a><a class="docs-footer-nextpage" href="../library/">API »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.10.0 on <span class="colophon-date" title="Tuesday 1 April 2025 22:25">Tuesday 1 April 2025</span>. Using Julia version 1.11.4.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+ylabel!(&quot;Probability&quot;)</code></pre><img src="101ac92d.svg" alt="Example block output"/></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« Home</a><a class="docs-footer-nextpage" href="../library/">API »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.10.0 on <span class="colophon-date" title="Wednesday 2 April 2025 14:31">Wednesday 2 April 2025</span>. Using Julia version 1.11.4.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
