@@ -19,9 +19,9 @@ const operators = [np, nr, σgp, σpg, σpr, σrp];
 
 
 #Due to atom dynamics
-function Ω(x, y, z, laser_params)
+function Ω(x, y, z, laser_params; n=1)
     Ω0, w0, z0 = laser_params;
-    return Ω0 .* A(x, y, z, w0, z0) .* A_phase(x, y, z, w0, z0);
+    return Ω0 .* A(x, y, z, w0, z0; n=n) .* A_phase(x, y, z, w0, z0);
 end;
 
 
@@ -127,6 +127,7 @@ Simulate two-photon Rydberg excitation of single atom with several sources of de
 - `laser_noise` -- (optional, default: `true`) if set to true, laser phase noise is included
 - `spontaneous_decay` -- (optional, default: `true`) if set to true, spontaneous decay from intermediate level is included
 - `parallel` -- (optional, default: `false`) parallel implementation is under development
+- `n` -- (optional, default: `1`) super-gauss parameter
 
 
 ### Output
@@ -156,7 +157,8 @@ function simulation(
     free_motion=true,
     laser_noise=true,
     spontaneous_decay=true,
-    parallel=false
+    parallel=false,
+    n=1
     )
     N = length(samples);
 
@@ -226,10 +228,10 @@ function simulation(
         [
             t -> -Δ(Vz(t), red_laser_params) - Δ0,
             t -> -δ(Vz(t), red_laser_params, blue_laser_params; parallel=parallel) - δ0,
-            t -> exp(1.0im * ϕ_red(t)) * Ω(X(t), Y(t), Z(t), red_laser_params) / 2.0,
-            t -> conj(exp(1.0im * ϕ_red(t)) * Ω(X(t), Y(t), Z(t), red_laser_params) / 2.0),
-            t -> exp(1.0im * ϕ_blue(t)) * Ω(X(t), Y(t), Z(t), blue_laser_params) / 2.0,
-            t -> conj(exp(1.0im * ϕ_blue(t)) * Ω(X(t), Y(t), Z(t), blue_laser_params) / 2.0)
+            t -> exp(1.0im * ϕ_red(t)) * Ω(X(t), Y(t), Z(t), red_laser_params; n=n) / 2.0,
+            t -> conj(exp(1.0im * ϕ_red(t)) * Ω(X(t), Y(t), Z(t), red_laser_params; n=n) / 2.0),
+            t -> exp(1.0im * ϕ_blue(t)) * Ω(X(t), Y(t), Z(t), blue_laser_params; n=n) / 2.0,
+            t -> conj(exp(1.0im * ϕ_blue(t)) * Ω(X(t), Y(t), Z(t), blue_laser_params; n=n) / 2.0)
         ],
         operators
         );
