@@ -26,13 +26,13 @@ end;
 
 #Amplitude of gaussian beam with |E0|=1
 function A(x, y, z, w0, z0; n=1)
-    return (w0 ./ w(z, w0, z0)) .* exp.(- (x .^2 .+ y .^2) ./ (w(z, w0, z0) .^(2*n)))
+    return (w0 ./ w(z, w0, z0)) .* exp.(- ((x .^2 .+ y .^2) ./ (w(z, w0, z0) .^2)) .^ n)
 end;
 
 
 #Intensity of gaussian beam with |E0|=1
 function I(x, y, z, w0, z0; n=1)
-    return ((w0 ./ w(z, w0, z0)) .* exp.(- (x .^2 .+ y .^2) ./ (w(z, w0, z0) .^(2*n)))) .^2
+    return ((w0 ./ w(z, w0, z0)) .* exp.(-((x .^2 .+ y .^2) ./ (w(z, w0, z0) .^2)).^n)) .^2
 end;
 
 
