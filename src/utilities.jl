@@ -74,6 +74,10 @@ function trap_frequencies(atom_params, trap_params)
 end;
 
 
+function dummy()
+    return 1
+end;
+
 # #Function for visualisation of samples
 # function samples_visualise(samples)
 #     x, y, z, vx, vy, vz = invert(samples);
