@@ -7,6 +7,9 @@ using LinearAlgebra
 using QuantumOptics
 using SplitApplyCombine
 using Interpolations
+using Polynomials
+using SpecialPolynomials
+using HypergeometricFunctions
 
 export 
     w0_to_z0, trap_frequencies, E, I,

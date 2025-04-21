@@ -1,8 +1,3 @@
-using QuantumOptics
-using Polynomials
-using SpecialPolynomials
-using HypergeometricFunctions
-
 #_genlaguerre(n, α, x) = binomial(n+α,n) * HypergeometricFunctions.M(-n, α+1, x)
 #Ω0, w0, z0, beam_type, n = laser_params; []
 
