@@ -37,11 +37,6 @@ function Ω_blue(x,y,z, laser_params)
     end;
 end;
 
-function Ω(x, y, z, laser_params)
-    Ω0, w0, z0 = laser_params;
-    return Ω0 .* A(x, y, z, w0, z0) .* A_phase(x, y, z, w0, z0);
-end;
-
 #Due to Doppler shift for red laser
 function Δ(vz, laser_params) 
     Ω0, w0, z0 = laser_params
