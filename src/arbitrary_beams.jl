@@ -49,7 +49,6 @@ end
 
 function simple_flattopHG_field(x,y,z,laser_params)
     Ω, w0, zr, beam_type, n, m = laser_params;
-    #w = w0 * ()
     w = w0 .* sqrt.(1.0 .+ (z ./zr) .^2);
     k = 2 * zr / w0^2
     phase0 = k .* z .+ k ./ 2 .* z .* (x.^2 .+ y.^2) ./ (z.^2 .+ zr.^2) 

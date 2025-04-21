@@ -4,7 +4,7 @@ laser_params: [Ω₀, w₀, z₀]
 """
 
 function Ω_red(laser_params)
-    Ω0, w0, z0 = laser_params;
+    #Ω0, w0, z0 = laser_params;
     return Ω0 
 end;
 
@@ -67,7 +67,7 @@ function simulation_blue_intens(
         Ht = TimeDependentSum(
         [
             t -> -Δ(Vz(t), red_laser_params) - Δ0;
-            t -> -δ(Vz(t), red_laser_params, blue_laser_params; parallel=false) - δ0;
+            t -> -δ(Vz(t), red_laser_params, blue_laser_params[1:3]; parallel=parallel) - δ0;
             t ->  Ω_red(red_laser_params) / 2.0;
             t ->  conj(Ω_red(red_laser_params) / 2.0);
             t -> Ω_blue(X(t), Y(t), Z(t), blue_laser_params) / 2.0;

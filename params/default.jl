@@ -33,7 +33,7 @@ U0 = 1000
 w0 = 1.2 #1.07;
 λ0 = 0.82 #0.852;
 z0 = w0_to_z0(w0, λ0);
-kT = 100 #50.0 * sqrt(adiabatic_param);
+kT = 1 #50.0 * sqrt(adiabatic_param);
 
 atom_params = [m, kT];
 trap_params = [U0, w0, z0];
