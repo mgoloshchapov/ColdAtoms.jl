@@ -14,7 +14,8 @@ export
     samples_generate, R, V, get_trap_params, H, samples_visualise,
     Sϕ, ϕ_amplitudes, ϕ,
     simulation, Ω_twophoton, T_twophoton, δ_twophoton, Ωr_required, 
-    g, p, r, gt
+    g, p, r, gt,
+    HG_coeff, simulation_blue_intens
     
         
 include("utilities.jl")
@@ -22,5 +23,7 @@ include("basic_experiments.jl")
 include("lasernoise_sampler.jl")
 include("atom_sampler.jl")
 include("rydberg_model.jl")
+include("arbitrary_beams.jl")
+include("rydberg_model_arb_bms.jl")
 
 end
