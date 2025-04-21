@@ -1,5 +1,4 @@
 using QuantumOptics
-using BenchmarkTools
 using Polynomials
 using SpecialPolynomials
 using HypergeometricFunctions
