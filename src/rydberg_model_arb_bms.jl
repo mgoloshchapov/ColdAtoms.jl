@@ -1,8 +1,3 @@
-#Due to atom dynamics
-"""
-laser_params: [Ω₀, w₀, z₀]
-"""
-
 function Ω_red(laser_params)
     #Ω0, w0, z0 = laser_params;
     return Ω0 

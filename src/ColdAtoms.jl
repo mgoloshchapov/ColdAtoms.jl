@@ -18,6 +18,7 @@ export
     Sϕ, ϕ_amplitudes, ϕ,
     simulation, Ω_twophoton, T_twophoton, δ_twophoton, Ωr_required, 
     g, p, r, gt,
+    simple_flattopHG_field,simple_flattopLG_field,
     HG_coeff, simulation_blue_intens
     
         
