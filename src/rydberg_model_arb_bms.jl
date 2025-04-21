@@ -1,23 +1,3 @@
-#Basis states
-const basis = NLevelBasis(4);
-const g = nlevelstate(basis, 1);
-const p = nlevelstate(basis, 2);
-const r = nlevelstate(basis, 3);
-const gt = nlevelstate(basis, 4);
-
-#Operators
-const σgp = g ⊗ dagger(p);
-const σpg = p ⊗ dagger(g);
-const σpr = p ⊗ dagger(r);
-const σrp = r ⊗ dagger(p);
-const np = p ⊗ dagger(p);
-const nr = r ⊗ dagger(r);
-const σgtp = gt ⊗ dagger(p);
-const σpgt = p ⊗ dagger(gt);
-
-const operators = [np, nr, σgp, σpg, σpr, σrp];
-
-
 #Due to atom dynamics
 """
 laser_params: [Ω₀, w₀, z₀]
@@ -36,63 +16,6 @@ function Ω_blue(x,y,z, laser_params)
         return simple_flattopHG_field(x,y,z,laser_params)
     end;
 end;
-
-#Due to Doppler shift for red laser
-function Δ(vz, laser_params) 
-    Ω0, w0, z0 = laser_params
-    k = 2 * z0/w0^2;
-    return k * vz
-end;
-
-#Due to Doppler shifts for red and blue lasers
-function δ(vz, red_laser_params, blue_laser_params; parallel=false)
-    Ωr0, wr0, zr0 = red_laser_params;
-    Ωb0, wb0, zb0 = blue_laser_params;
-    
-    kr = 2 * zr0/wr0^2;
-    kb = 2 * zb0/wb0^2;
-
-    if parallel
-        return (kr + kb) * vz
-    else
-        return (kr - kb) * vz
-    end;
-end;
-
-#Two-photon Rydberg hamiltonian for 1 atom
-function Hamiltonian(Ωr, Ωb, Δ, δ)
-    return TimeDependentSum(
-        [
-            t -> -Δ(t),
-            t -> -δ(t),
-            t -> Ωr(t) ./2.0,
-            t -> conj.(Ωr(t)) ./2.0,
-            t -> Ωb(t)/2.0,
-            t -> conj.(Ωb(t)) ./2.0,
-        ],       
-        [
-            np,
-            nr,
-            σgp,
-            σpg,
-            σpr,
-            σrp  
-        ]
-    )
-end;
-
-#Jump operators for master equation 
-"""
-decay_params: [Γg, Γgt]
-"""
-function JumpOperators(decay_params)
-    Γg, Γgt = decay_params;
-    return [sqrt(Γg)*σgp, sqrt(Γgt)*σgtp], [sqrt(Γg)*σpg, sqrt(Γgt)*σpgt]
-end;
-
-function fuck_Julia(t)#::Int64
-    return t
-end
 
 function simulation_blue_intens(
     tspan, ψ0,  
@@ -146,9 +69,9 @@ function simulation_blue_intens(
             t -> -Δ(Vz(t), red_laser_params) - Δ0;
             t -> -δ(Vz(t), red_laser_params, blue_laser_params; parallel=false) - δ0;
             t ->  Ω_red(red_laser_params) / 2.0;
-            t ->  Ω_red(red_laser_params) / 2.0;
+            t ->  conj(Ω_red(red_laser_params) / 2.0);
             t -> Ω_blue(X(t), Y(t), Z(t), blue_laser_params) / 2.0;
-            t -> Ω_blue(X(t), Y(t), Z(t), blue_laser_params) / 2.0;
+            t -> conj(Ω_blue(X(t), Y(t), Z(t), blue_laser_params) / 2.0);
         ],
         operators
         );
