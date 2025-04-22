@@ -1,5 +1,5 @@
 function Ω_red(laser_params)
-    #Ω0, w0, z0 = laser_params;
+    Ω0, w0, z0 = laser_params;
     return Ω0 
 end;
 

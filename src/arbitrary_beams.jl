@@ -7,10 +7,10 @@ function Gouy_phase(lmzzr_gouy)
 end
 
 _genlaguerre(n, α, x) = binomial(n+α,n) * HypergeometricFunctions.M(-n, α+1, x)
-function LG(r, w, k)
+function LG(r2, w, k)
     #L_k = _genlaguerre(k,0, 2 .* r.^2 ./ w^2)
     #norm = 2^(n/2) * factorial(n)^0.5 * (pi/2)^(1/4)
-    return exp.(-r.^2 ./ w^2) .* _genlaguerre(k,0, 2 .* r.^2 ./ w^2) #Hn.(2^0.5 .* x ./ w ) #./ norm
+    return exp.(-r2 ./ w^2) .* _genlaguerre(k,0, 2 .* r2 ./ w^2) #Hn.(2^0.5 .* x ./ w ) #./ norm
 end
 
 function HG(x, w, n)
