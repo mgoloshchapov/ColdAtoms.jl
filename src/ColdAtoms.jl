@@ -19,7 +19,9 @@ export
     simulation, Ω_twophoton, T_twophoton, δ_twophoton, Ωr_required, 
     g, p, r, gt,
     simple_flattopHG_field,simple_flattopLG_field,
-    HG_coeff, simulation_blue_intens
+    HG_coeff, simulation_blue_intens,
+    g1, p1, r1, gt1, zero1,
+    Id, two_atom_simulation
     
         
 include("utilities.jl")
@@ -29,5 +31,6 @@ include("atom_sampler.jl")
 include("rydberg_model.jl")
 include("arbitrary_beams.jl")
 include("rydberg_model_arb_bms.jl")
+include("two_atom_model.jl")
 
 end

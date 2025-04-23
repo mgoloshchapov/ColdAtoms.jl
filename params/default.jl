@@ -52,3 +52,5 @@ red_laser_params = [Ωr, wr, zr];
 #Ωb = 2π * 60.0; #96
 Γ = 2.0*π * 6.0;
 decay_params = [Γ/4, 3*Γ/4];
+
+V_rr = 2.0*π * 544
