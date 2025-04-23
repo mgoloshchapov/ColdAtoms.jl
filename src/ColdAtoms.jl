@@ -21,8 +21,9 @@ export
     simple_flattopHG_field,simple_flattopLG_field,
     HG_coeff, simulation_blue_intens,
     g1, p1, r1, gt1, zero1,
-    Id, two_atom_simulation
-    
+    Id, two_atom_simulation,
+    direct_CZ_simulation,
+    phase1
         
 include("utilities.jl")
 include("basic_experiments.jl")
