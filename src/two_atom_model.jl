@@ -43,11 +43,16 @@ const two_atom_operators = [zz1, zz2, np1, nr1, σgp1, σpg1, σpr1, σrp1, np2,
 const direct_operators = [zz1, zz2, nr1, nr2, σgr1, σrg1, σgr2, σrg2, rr]
 
 function phase1(t)
-    if t > 0.68 #0.2222
+    res = t
+    for i in 1:100
+        res = (43973 * res + 3257) % 391
+    end;
+    return res / 391 * 2π
+    """if t > 0.68 #0.2222
         return 3.902
     else
         return 0
-    end;
+    end;"""
 end;
 
 #Two-photon Rydberg hamiltonian for 1 atom
@@ -99,11 +104,14 @@ function two_atom_simulation(tspan, ψ0,
     samples_first, samples_second, 
     red_laser_params_first,    blue_laser_params_first,
     red_laser_params_second,    blue_laser_params_second,
-    detuning_params_first,     detuning_params_second,     decay_params, V_rr;
+    detuning_params_first,     detuning_params_second,     
+    decay_params, V_rr, beam_coords;
     atom_motion=true,     free_motion=true,
     spontaneous_decay=true,     parallel=false
     )
-    
+
+    dist = 3.4
+    X0,Y0 = beam_coords
     d = 0 #6800 #MHz
     N = length(samples_first); 
     if N != length(samples_second)
@@ -160,18 +168,18 @@ function two_atom_simulation(tspan, ψ0,
             t -> d,
             t -> d,
             t -> -Δ(Vz1(t), red_laser_params_first) - Δ01,
-            t -> -δ(Vz1(t), red_laser_params_first, blue_laser_params_first; parallel=parallel) - δ01,
-            t -> Ω(X1(t), Y1(t), Z1(t), red_laser_params_first ) / 2.0,
-            t -> conj(Ω(X1(t), Y1(t), Z1(t), red_laser_params_first ) / 2.0),
-            t -> exp(1.0im * eps(t)) * Ω(X1(t), Y1(t), Z1(t), blue_laser_params_first ) / 2.0,
-            t -> conj(exp(1.0im * eps(t)) * Ω(X1(t), Y1(t), Z1(t), blue_laser_params_first ) / 2.0),
+            t -> -δ(Vz1(t), red_laser_params_first, blue_laser_params_first[1:3]; parallel=parallel) - δ01,
+            t -> Ω_red(red_laser_params_first ) / 2.0,
+            t -> conj(Ω_red(red_laser_params_first ) / 2.0), 
+            t -> Ω_blue(X1(t)-X0, Y1(t)-Y0, Z1(t), blue_laser_params_first ) / 2.0,
+            t -> conj(Ω_blue(X1(t)-X0, Y1(t)-Y0, Z1(t), blue_laser_params_first ) / 2.0),
 
             t -> -Δ(Vz2(t), red_laser_params_first) - Δ02,
-            t -> -δ(Vz2(t), red_laser_params_first, blue_laser_params_first; parallel=parallel) - δ02,
-            t -> Ω(X2(t), Y2(t), Z2(t), red_laser_params_second ) / 2.0,
-            t -> conj(Ω(X2(t), Y2(t), Z2(t), red_laser_params_second ) / 2.0),
-            t -> exp(1.0im * eps(t)) * Ω(X2(t), Y2(t), Z2(t), blue_laser_params_second ) / 2.0,
-            t -> conj(exp(1.0im * eps(t)) * Ω(X2(t), Y2(t), Z2(t), blue_laser_params_second ) / 2.0),
+            t -> -δ(Vz2(t), red_laser_params_first, blue_laser_params_first[1:3]; parallel=parallel) - δ02,
+            t -> Ω_red(red_laser_params_second ) / 2.0, 
+            t -> conj(Ω_red(red_laser_params_second ) / 2.0 ) , 
+            t -> Ω_blue(dist + X2(t) - X0, Y2(t) - Y0, Z2(t), blue_laser_params_second ) / 2.0,
+            t -> conj(Ω_blue(dist + X2(t) - X0, Y2(t) - Y0, Z2(t), blue_laser_params_second ) / 2.0),
 
             t -> V_rr
         ],
@@ -286,3 +294,8 @@ function direct_CZ_simulation(tspan, ψ0,
 
     return ρ_mean/N, ρ2_mean/N
 end
+
+#Ω_red(X1(t)-X0, Y1(t)-Y0, Z1(t), red_laser_params_first ) / 2.0
+#conj(Ω_red(X1(t)-X0, Y1(t)-Y0, Z1(t), red_laser_params_first ) / 2.0),
+#Ω_red(dist + X2(t) - X0, Y2(t) - Y0, Z2(t), red_laser_params_second ) / 2.0,
+#conj(Ω_red(dist + X2(t) - X0, Y2(t) - Y0, Z2(t), red_laser_params_second ) / 2.0),

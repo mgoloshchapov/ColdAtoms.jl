@@ -21,7 +21,7 @@ blue_laser_phase_amplitudes = ϕ_amplitudes(f, blue_laser_phase_params);
 λb = 0.475;
 
 wr = 100.0;
-wb = 2 #3.5;
+wb = 3 #3.5;
 zr = w0_to_z0(wr, λr);
 zb = w0_to_z0(wb, λb);
 
