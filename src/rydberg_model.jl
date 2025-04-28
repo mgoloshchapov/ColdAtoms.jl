@@ -24,16 +24,12 @@ function Ω(x, y, z, laser_params; n=1)
     return Ω0 .* A(x, y, z, w0, z0; n=n) .* A_phase(x, y, z, w0, z0);
 end;
 
-
-
 #Due to Doppler shift for red laser
 function Δ(vz, laser_params)
     Ω0, w0, z0 = laser_params
     k = 2 * z0/w0^2;
     return k * vz
 end;
-
-
 
 #Due to Doppler shifts for red and blue lasers
 function δ(vz, red_laser_params, blue_laser_params; parallel=false)
@@ -253,21 +249,17 @@ function simulation(
     return ρ_mean/N, ρ2_mean/N
 end;
 
-
 function Ω_twophoton(Ωr, Ωb, Δ)
     return Ωb * Ωr / (2.0 * Δ)
 end;
-
 
 function T_twophoton(Ωr, Ωb, Δ)
     return 2.0*π / Ω_twophoton(Ωr, Ωb, Δ);
 end;
 
-
 function δ_twophoton(Ωr, Ωb, Δ)
     return (Ωb^2 - Ωr^2)/(4.0 * Δ)
 end;
-
 
 function Ωr_required(Ω, Ωb, Δ)
     return 2.0 * Δ * Ω / Ωb

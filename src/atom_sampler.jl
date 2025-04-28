@@ -88,7 +88,7 @@ function samples_generate(trap_params, atom_params, N; freq=10, skip=1000, harmo
         
         samples = [];
         while length(samples) < N
-            cord = rand(d)
+            cord = rand(d)  
             if H(cord, trap_params, m) < U0
                 push!(samples, cord)
             end
