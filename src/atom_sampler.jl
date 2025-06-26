@@ -77,7 +77,7 @@ Vector of Monte-Carlo samples ``[x_{i}, y_{i}, z_{i}, vx_{i}, vy_{i}, vz_{i}]`` 
 If `harmonic` set to `true`, acceptance rate is set to `1.0`
 
 """
-function samples_generate(trap_params, atom_params, N; freq=10, skip=1000, harmonic=true)
+function samples_generate(trap_params, atom_params, N; freq=10, skip=1000, harmonic=true, eps=1e-2)
     U0, w0, z0 = trap_params;
     m, T = atom_params;
 
@@ -89,12 +89,12 @@ function samples_generate(trap_params, atom_params, N; freq=10, skip=1000, harmo
         samples = [];
         while length(samples) < N
             cord = rand(d)  
-            if H(cord, trap_params, m) < U0
+            if H(cord, trap_params, m) < U0 * (1-eps)
                 push!(samples, cord)
             end
         end
         # func(cord) = H(cord, trap_params, m);
-        # samples = samples[func.(samples) .< U0];
+        # samples = samples[func.(samples) .< U0*(1-eps)];
 
         # Дописать сэмплирование в случае гармонического потенциала. 
         # Случай T ~ U0 рассматривать не интересно, так как у нас при нём ниче не работает
@@ -113,7 +113,7 @@ function samples_generate(trap_params, atom_params, N; freq=10, skip=1000, harmo
             cord_new = cord_last + rand(d);
             p_acc = prob_boltzmann(cord_new, trap_params, atom_params; harmonic)/prob_boltzmann(cord_last, trap_params, atom_params; harmonic);
             
-            if p_acc > u_acc[i] && H(cord_new, trap_params, m; harmonic) < U0
+            if p_acc > u_acc[i] && H(cord_new, trap_params, m; harmonic) < U0 * (1-eps)
                 push!(samples, cord_new);
                 acc_rate += 1; 
             else
