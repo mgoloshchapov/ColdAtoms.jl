@@ -19,32 +19,33 @@ const operators = [np, nr, σgp, σpg, σpr, σrp];
 
 
 #Due to atom dynamics
-function Ω(x, y, z, laser_params; n=1)
+function Ω(x, y, z, laser_params; n=1, θ=0.0)
     Ω0, w0, z0 = laser_params;
-    return Ω0 .* A(x, y, z, w0, z0; n=n) .* A_phase(x, y, z, w0, z0);
+    return Ω0 .* A(x, y, z, w0, z0; n=n, θ=θ) .* A_phase(x, y, z, w0, z0; θ=θ);
 end;
 
 #Due to Doppler shift for red laser
-function Δ(vz, laser_params)
+function Δ(vx, vz, laser_params; θ=0.0)
     Ω0, w0, z0 = laser_params
     k = 2 * z0/w0^2;
-    return k * vz
+
+    Δx = k * sin(θ) * vx
+    Δz = k * cos(θ) * vz
+    return Δx + Δz
 end;
 
 #Due to Doppler shifts for red and blue lasers
-function δ(vz, red_laser_params, blue_laser_params; parallel=false)
+function δ(vx, vz, red_laser_params, blue_laser_params; θr=0.0, θb=0.0)
     Ωr0, wr0, zr0 = red_laser_params;
     Ωb0, wb0, zb0 = blue_laser_params;
     
     kr = 2 * zr0/wr0^2;
     kb = 2 * zb0/wb0^2;
 
-    if parallel
-        # return (kr + kb) * vz
-        return sqrt(kr^2 + kb^2) * vz
-    else
-        return (kr - kb) * vz
-    end;
+    δx = (kr*sin(θr) + kb*sin(θb))*vx
+    δz = (kr*cos(θr) + kb*cos(θb))*vz 
+
+    return δx + δz
 end;
 
 
@@ -153,7 +154,8 @@ function simulation(
     free_motion=true,
     laser_noise=true,
     spontaneous_decay=true,
-    parallel=false,
+    θr=0.0,
+    θb=0.0,
     n=1
     )
     N = length(samples);
@@ -192,9 +194,6 @@ function simulation(
 
     
     for i ∈ 1:N
-        """
-        Each time I copy samples -> Allocations. 100 * 6 * 64 = 600 * 64 ~ 36000 B ~ 36 kB
-        """
         if atom_motion
             #Atom initial conditions
             xi, yi, zi, vxi, vyi, vzi = samples[i];
@@ -206,11 +205,10 @@ function simulation(
         X = t -> R(t, xi, vxi, ωr; free=free_motion);
         Y = t -> R(t, yi, vyi, ωr; free=free_motion);
         Z = t -> R(t, zi, vzi, ωz; free=free_motion);
+        Vx = t -> V(t, xi, vxi, ωr; free=free_motion);
         Vz = t -> V(t, zi, vzi, ωz; free=free_motion);
         
-        """
-        Can I preallocate functions + Shall I use f(t) or just f? 
-        """
+ 
         #Generate phase noise traces for red and blue lasers
         ϕ_red_res = ϕ(tspan_noise, f, red_laser_phase_amplitudes_temp);
         ϕ_blue_res = ϕ(tspan_noise, f, blue_laser_phase_amplitudes_temp);
@@ -222,19 +220,16 @@ function simulation(
         #Hamiltonian params trajectories
         Ht = TimeDependentSum(
         [
-            t -> -Δ(Vz(t), red_laser_params) - Δ0,
-            t -> -δ(Vz(t), red_laser_params, blue_laser_params; parallel=parallel) - δ0,
-            t -> exp(1.0im * ϕ_red(t)) * Ω(X(t), Y(t), Z(t), red_laser_params; n=n) / 2.0,
-            t -> conj(exp(1.0im * ϕ_red(t)) * Ω(X(t), Y(t), Z(t), red_laser_params; n=n) / 2.0),
-            t -> exp(1.0im * ϕ_blue(t)) * Ω(X(t), Y(t), Z(t), blue_laser_params; n=n) / 2.0,
-            t -> conj(exp(1.0im * ϕ_blue(t)) * Ω(X(t), Y(t), Z(t), blue_laser_params; n=n) / 2.0)
+            t -> -Δ(Vx(t), Vz(t), red_laser_params; θ=θr) - Δ0,
+            t -> -δ(Vx(t), Vz(t), red_laser_params, blue_laser_params; θr=θr, θb=θb) - δ0,
+            t -> exp(1.0im * ϕ_red(t)) * Ω(X(t), Y(t), Z(t), red_laser_params; n=n, θ=θr) / 2.0,
+            t -> conj(exp(1.0im * ϕ_red(t)) * Ω(X(t), Y(t), Z(t), red_laser_params; n=n, θ=θr) / 2.0),
+            t -> exp(1.0im * ϕ_blue(t)) * Ω(X(t), Y(t), Z(t), blue_laser_params; n=n, θ=θb) / 2.0,
+            t -> conj(exp(1.0im * ϕ_blue(t)) * Ω(X(t), Y(t), Z(t), blue_laser_params; n=n, θ=θb) / 2.0)
         ],
         operators
         );
 
-        """
-        Can I remove super_oprator from here?
-        """
         # #Returns hamiltonian and jump operators in a form required by timeevolution.master_dynamic
         function super_operator(t, rho)
             return Ht, J, Jdagger;

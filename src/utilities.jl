@@ -25,28 +25,34 @@ end;
 
 
 #Amplitude of gaussian beam with |E0|=1
-function A(x, y, z, w0, z0; n=1)
-    return (w0 ./ w(z, w0, z0)) .* exp.(- ((x .^2 .+ y .^2) ./ (w(z, w0, z0) .^2)) .^ n)
+function A(x, y, z, w0, z0; n=1, θ=0.0)
+    xt, yt, zt = sqrt(x^2 + y^2), 0.0, z 
+    xt, zt = xt*cos(θ)-zt*sin(θ), xt*sin(θ) + zt*cos(θ)
+    return (w0 ./ w(zt, w0, z0)) .* exp.(- ((xt .^2 .+ yt .^2) ./ (w(zt, w0, z0) .^2)) .^ n)
 end;
 
 
 #Intensity of gaussian beam with |E0|=1
-function I(x, y, z, w0, z0; n=1)
-    return ((w0 ./ w(z, w0, z0)) .* exp.(-((x .^2 .+ y .^2) ./ (w(z, w0, z0) .^2)).^n)) .^2
+function I(x, y, z, w0, z0; n=1, θ=0.0)
+    xt, yt, zt = sqrt(x^2 + y^2), 0.0, z 
+    xt, zt = xt*cos(θ)-zt*sin(θ), xt*sin(θ) + zt*cos(θ)
+    return ((w0 ./ w(zt, w0, z0)) .* exp.(-((xt .^2 .+ yt .^2) ./ (w(zt, w0, z0) .^2)).^n)) .^2
 end;
 
 
 #Phase of gaussian beam
-function A_phase(x, y, z, w0, z0)
+function A_phase(x, y, z, w0, z0; θ=0.0)
+    xt, yt, zt = sqrt(x^2 + y^2), 0.0, z 
+    xt, zt = xt*cos(θ)-zt*sin(θ), xt*sin(θ) + zt*cos(θ)
     k = 2.0 * z0 / w0^2;
-    return exp.(-1.0im * k * z .* (0.5*(x .^2 + y .^ 2) ./ (z .^2  + z0 .^2)) + 1.0im * atan.(z ./ z0));
+    return exp.(-1.0im * k * zt .* (0.5*(xt .^2 + yt .^ 2) ./ (zt .^2  + z0 .^2)) + 1.0im * atan.(zt ./ z0));
 end;
 
 
 
 #Complex amplitude of gaussian beam with |E0|=1
-function E(x, y, z, w0, z0;n=1)
-    return A(x,y,z,w0,z0;n=n) .* Phase(x,y,z,w0,z0)
+function E(x, y, z, w0, z0;n=1, θ=0.0)
+    return A(x,y,z,w0,z0;n=n, θ=θ) .* A_phase(x,y,z,w0,z0; θ=θ)
 end;
 
 
