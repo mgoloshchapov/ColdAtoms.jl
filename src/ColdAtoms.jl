@@ -9,7 +9,7 @@ using SplitApplyCombine
 using Interpolations
 
 export 
-    w0_to_z0, trap_frequencies, E, I, dummy,
+    w0_to_z0, trap_frequencies, E, I,
     release_recapture,
     samples_generate, R, V, get_trap_params, H, samples_visualise,
     Sϕ, ϕ_amplitudes, ϕ,
