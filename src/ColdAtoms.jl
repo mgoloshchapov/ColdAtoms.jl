@@ -10,6 +10,7 @@ using Interpolations
 using Polynomials
 using SpecialPolynomials
 using HypergeometricFunctions
+#using OrdinaryDiffEq
 
 export 
     w0_to_z0, trap_frequencies, E, I, dummy,

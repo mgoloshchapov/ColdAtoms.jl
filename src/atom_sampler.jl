@@ -129,6 +129,7 @@ end;
 #Generate coordinate trajectory from Monte-Carlo initial conditions
 function R(t, ri, vi, ω; free=false)
     if free
+        println(ri + vi * t)
         return ri + vi * t;
     else
         return ri * cos(ω * t) + vi/ω * sin(ω * t);

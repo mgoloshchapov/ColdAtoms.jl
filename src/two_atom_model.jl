@@ -42,19 +42,6 @@ const σrg2 = Id ⊗ r1 ⊗ dagger(g1);
 const two_atom_operators = [zz1, zz2, np1, nr1, σgp1, σpg1, σpr1, σrp1, np2, nr2, σgp2, σpg2, σpr2, σrp2, rr];
 const direct_operators = [zz1, zz2, nr1, nr2, σgr1, σrg1, σgr2, σrg2, rr]
 
-function phase1(t)
-    res = t
-    for i in 1:100
-        res = (43973 * res + 3257) % 391
-    end;
-    return res / 391 * 2π
-    """if t > 0.68 #0.2222
-        return 3.902
-    else
-        return 0
-    end;"""
-end;
-
 #Two-photon Rydberg hamiltonian for 1 atom
 """function Hamiltonian2(Ωr1, Ωb1, Δ1, δ1, Ωr2, Ωb2, Δ2, δ2, V_rr, d)
     return TimeDependentSum(
@@ -167,13 +154,15 @@ function two_atom_simulation(tspan, ψ0,
         [
             t -> d,
             t -> d,
+            # [zz1, zz2, np1, nr1, σgp1, σpg1, σpr1, σrp1, np2, nr2, σgp2, σpg2, σpr2, σrp2, rr];
+
             t -> -Δ(Vz1(t), red_laser_params_first) - Δ01,
             t -> -δ(Vz1(t), red_laser_params_first, blue_laser_params_first[1:3]; parallel=parallel) - δ01,
             t -> Ω_red(red_laser_params_first ) / 2.0,
             t -> conj(Ω_red(red_laser_params_first ) / 2.0), 
             t -> Ω_blue(X1(t)-X0, Y1(t)-Y0, Z1(t), blue_laser_params_first ) / 2.0,
             t -> conj(Ω_blue(X1(t)-X0, Y1(t)-Y0, Z1(t), blue_laser_params_first ) / 2.0),
-
+            
             t -> -Δ(Vz2(t), red_laser_params_first) - Δ02,
             t -> -δ(Vz2(t), red_laser_params_first, blue_laser_params_first[1:3]; parallel=parallel) - δ02,
             t -> Ω_red(red_laser_params_second ) / 2.0, 
@@ -200,13 +189,12 @@ function two_atom_simulation(tspan, ψ0,
     return ρ_mean/N, ρ2_mean/N
 end;
 
-
-function direct_CZ_simulation(tspan, ψ0, 
+function direct_CZ_simulation(tspan1, tspan2, ρ_1, 
     atom_params,    trap_params,     
     samples_first, samples_second, 
     red_laser_params_first,    blue_laser_params_first,
     red_laser_params_second,    blue_laser_params_second,
-    detuning_params_first,     detuning_params_second,     V_rr;
+    detuning_params_first,     detuning_params_second,     V_rr, phase;
     atom_motion=true,     free_motion=true,     parallel=false
     )
     
@@ -228,17 +216,23 @@ function direct_CZ_simulation(tspan, ψ0,
     Γg, Γgt = decay_params_temp;
     J = [sqrt(Γg)*σgp1, sqrt(Γgt)*σgtp1, sqrt(Γg)*σgp2, sqrt(Γgt)*σgtp2];
     Jdagger = [sqrt(Γg)*σpg1, sqrt(Γgt)*σpgt1,sqrt(Γg)*σgp2, sqrt(Γgt)*σgtp2];
-
     #J, Jdagger = [sqrt(Γg)*σgp, sqrt(Γgt)*σgtp], [sqrt(Γg)*σpg, sqrt(Γgt)*σpgt];
 
-    ρ0 = ψ0 ⊗ dagger(ψ0);
-
-    #Density matrix averaged over realizations of laser noise and atom dynamics.
+    #ρ0 = ψ0 ⊗ dagger(ψ0); #ψ0
+    ρ0 = copy(ρ_1)
+    ρ_temp1 = [zero(ρ_1) for _ ∈ 1:length(tspan1)];
+    ρ_temp2 = [zero(ρ_1) for _ ∈ 1:length(tspan2)];
+    ρ_mean = [zero(ρ_1) for _ ∈ 1:(length(tspan1)+length(tspan2))];
+    ρ_temp = [zero(ρ_1) for _ ∈ 1:(length(tspan1)+length(tspan2))];
+    ρ2_mean = [zero(ρ_1) for _ ∈ 1:(length(tspan1)+length(tspan2))];
+    
+"""#Density matrix averaged over realizations of laser noise and atom dynamics.
     ρ_mean = [zero(ψ0 ⊗ dagger(ψ0)) for _ ∈ 1:length(tspan)];
     ρ_temp = [zero(ψ0 ⊗ dagger(ψ0)) for _ ∈ 1:length(tspan)];
 
     #Second moment for error estimation of level populations. 
     ρ2_mean = [zero(ψ0 ⊗ dagger(ψ0)) for _ ∈ 1:length(tspan)];
+"""
     
     for i ∈ 1:N
         if atom_motion
@@ -259,21 +253,20 @@ function direct_CZ_simulation(tspan, ψ0,
         Y2 = t -> R(t, y2i, vy2i, ωr; free=free_motion);
         Z2 = t -> R(t, z2i, vz2i, ωz; free=free_motion);
         Vz2 = t -> V(t, z2i, vz2i, ωz; free=free_motion);
-        #phase = t -> eps(t);
 
         #Hamiltonian params trajectories
-        Ht = TimeDependentSum(
+        Ht_0 = TimeDependentSum(
         [
             t -> d,
             t -> d,
             t -> Δ01,
             t -> Δ02,
             
-            t -> exp(1.0im * phase1(t)) * Ω0 /2.0 , #Ω(X1(t), Y1(t), Z1(t), blue_laser_params_first ) / 2.0,
-            t -> conj(exp(1.0im * phase1(t)) * Ω0 /2.0),  #Ω(X1(t), Y1(t), Z1(t), blue_laser_params_first ) / 2.0),
+            t -> Ω(X1(t), Y1(t), Z1(t), blue_laser_params_first ) / 2.0, #Ω0 / 2.0 ,
+            t -> Ω(X1(t), Y1(t), Z1(t), blue_laser_params_first ) / 2.0,
 
-            t -> exp(1.0im * phase1(t)) * Ω0 /2.0 , #Ω(X2(t), Y2(t), Z2(t), blue_laser_params_second ) / 2.0,
-            t -> conj(exp(1.0im * phase1(t)) * Ω0 /2.0), #Ω(X2(t), Y2(t), Z2(t), blue_laser_params_second ) / 2.0),
+            t -> Ω(X2(t), Y2(t), Z2(t), blue_laser_params_second ) / 2.0,
+            t -> Ω(X2(t), Y2(t), Z2(t), blue_laser_params_second ) / 2.0,
 
             t -> V_rr
         ],
@@ -281,15 +274,44 @@ function direct_CZ_simulation(tspan, ψ0,
         #[zz1, zz2, nr1, nr2, σgr1, σrg1,  σgr2, σrg2, rr]
         );
 
+        Ht_phase = TimeDependentSum(
+        [
+            t -> d,
+            t -> d,
+            t -> Δ01,
+            t -> Δ02,
+            
+            t -> exp(1.0im * phase) * Ω(X1(t), Y1(t), Z1(t), blue_laser_params_first ) / 2.0,
+            t -> conj(exp(1.0im * phase) * Ω(X1(t), Y1(t), Z1(t), blue_laser_params_first ) / 2.0),
+
+            t -> exp(1.0im * phase) * Ω(X2(t), Y2(t), Z2(t), blue_laser_params_second ) / 2.0,
+            t -> conj(exp(1.0im * phase) * Ω(X2(t), Y2(t), Z2(t), blue_laser_params_second ) / 2.0),
+
+            t -> V_rr
+        ],
+        direct_operators
+        );
+
         #Returns hamiltonian and jump operators in a form required by timeevolution.master_dynamic
+        function super_operator0(t, rho)
+            return Ht_0, J, Jdagger;
+        end;
         function super_operator(t, rho)
-            return Ht, J, Jdagger;
+            return Ht_phase, J, Jdagger;
         end;
         
-        _, ρ_temp = timeevolution.master_dynamic(tspan, ρ0, super_operator);
-
-        ρ_mean = ρ_mean + ρ_temp;
-        ρ2_mean = ρ2_mean + ρ_temp .^ 2;
+        _, ρ_temp1 = timeevolution.master_dynamic(tspan1, ρ0, super_operator0) #; alg=OrdinaryDiffEq.Tsit5(), dt=0.1, reltol=1e-3);
+        _, ρ_temp2 = timeevolution.master_dynamic(tspan2, ρ_temp1[end], super_operator) #; alg=OrdinaryDiffEq.Tsit5(), dt=0.1, reltol=1e-3);
+        
+        n1=length(tspan1)
+        for i ∈ 1:n1
+            ρ_temp[i] = ρ_temp1[i]
+        end;
+        for i ∈ 1:length(tspan2)
+            ρ_temp[i+n1] = ρ_temp2[i]
+        end;
+        ρ_mean = ρ_mean .+ ρ_temp;
+        ρ2_mean = ρ2_mean .+ ρ_temp .^ 2;
     end;
 
     return ρ_mean/N, ρ2_mean/N
