@@ -12,8 +12,6 @@ function Sϕ(f, laser_phase_params)
     return res ./ (f .^ 2)
 end;
 
-
-
 #Laser phase noise amplitudes
 function ϕ_amplitudes(f, laser_phase_params)
     h0, hg, σg, fg = laser_phase_params;
@@ -28,8 +26,6 @@ function ϕ_amplitudes(f, laser_phase_params)
     
     return 2.0 .* sqrt.(Δf * res) ./ f;
 end;
-
-
 
 #Phase noise trajectory
 function ϕ(tspan, f, amplitudes)
