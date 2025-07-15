@@ -86,18 +86,13 @@ function samples_generate(trap_params, atom_params, N; freq=10, skip=1000, harmo
         cov = Diagonal(([T*w0^2/(4.0*U0),T*w0^2/(4.0*U0),T*z0^2/(2.0*U0),vconst^2*T/m,vconst^2*T/m,vconst^2*T/m]));
         d = MvNormal(mean, cov);
         
-        samples = [];
+        samples = Vector{Vector{Float64}}();
         while length(samples) < N
             cord = rand(d)  
             if H(cord, trap_params, m) < U0 * (1-eps)
                 push!(samples, cord)
             end
         end
-        # func(cord) = H(cord, trap_params, m);
-        # samples = samples[func.(samples) .< U0*(1-eps)];
-
-        # Дописать сэмплирование в случае гармонического потенциала. 
-        # Случай T ~ U0 рассматривать не интересно, так как у нас при нём ниче не работает
         return samples, 1
     else
         mean = zeros(6);
