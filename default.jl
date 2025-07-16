@@ -33,7 +33,7 @@ w0 = 1.1;
 M2 = 1.3;
 z0 = w0_to_z0(w0, λ0, M2);
 
-atom_params = [m, kT];
+atom_params = [m, T];
 trap_params = [U0, w0, z0];
 
 #Rabi frequencies

@@ -82,136 +82,84 @@ function JumpOperators(decay_params)
 end;
 
 
+mutable struct RydbergConfig
+    tspan::Vector{Float64}
+    ψ0::Ket{NLevelBasis{Int64}, Vector{ComplexF64}}
 
-"""
-    simulation(
-        tspan, ψ0, 
-        atom_params,
-        trap_params,
-        samples,
-        f,
-        red_laser_phase_amplitudes,
-        blue_laser_phase_amplitudes,
-        red_laser_params,
-        blue_laser_params,
-        detuning_params,
-        decay_params;
-        atom_motion=true,
-        free_motion=true,
-        laser_noise=true,
-        spontaneous_decay=true,
-        parallel=false
-        )
+    atom_params::Vector{Float64}
+    trap_params::Vector{Float64}
+    samples::Vector{Vector{Float64}}
 
-Simulate two-photon Rydberg excitation of single atom with several sources of decoherence
-
-### Input
-
-- `tspan` -- vector specifying the points of time for which output should be displayed
-- `ψ0` -- initial wavefunction vector of normalized complex amplitudes ``[c_{g}, c_{p}, c_{r}]``
-- `atom_params` -- vector [atom mass in a.u., atom temperature in ``\\mu K``]
-- `trap_params` -- vector [trap depth ``U_{0}`` in ``\\mu K``, beam waist radius in ``\\mu m``, beam Rayleigh length in ``\\mu m``]
-- `samples` -- Monte-Carlo samples of initial atom coordinates and velocities, can be received using samples_generate
-- `f` -- frequencies at which laser phase noise is sampled
-- `red_laser_phase_amplitudes` -- amplitudes of red laser phase noise for correspoding frequencies `f`
-- `blue_laser_phase_amplitudes` -- amplitudes of blue laser phase noise for correspoding frequencies `f`
-- `red_laser_params` -- write explanation
-- `blue_laser_params` -- write explanation
-- `detuning_params` -- vector [Δ0, δ0], which sets detuning from intermediate level and Rydberg level correspondingly
-- `decay_params` -- write explanation
-- `atom_motion` -- (optional, default: `true`) if set to true, atom motion is included
-- `free_motion` -- (optional, default: `true`) if set to true, trap is turned off
-- `laser_noise` -- (optional, default: `true`) if set to true, laser phase noise is included
-- `spontaneous_decay` -- (optional, default: `true`) if set to true, spontaneous decay from intermediate level is included
-- `parallel` -- (optional, default: `false`) parallel implementation is under development
-- `n` -- (optional, default: `1`) super-gauss parameter
-
-
-### Output
-
-Outputs Monte-Carlo averaged density matrix and squared density matrix for error calculation
-with elements ordered in correspondence with order ground, intermediate, Rydberg
-
-"""
-function simulation(
-    tspan, ψ0, 
-        
-    atom_params,
-    trap_params,
-    samples,
+    f::Vector{Float64}
+    red_laser_phase_amplitudes::Vector{Float64}
+    blue_laser_phase_amplitudes::Vector{Float64}
     
-    f,
-    red_laser_phase_amplitudes,
-    blue_laser_phase_amplitudes,
+    red_laser_params::Vector{Float64}
+    blue_laser_params::Vector{Float64}
     
-    red_laser_params,
-    blue_laser_params,
-    
-    detuning_params,
-    decay_params;
+    detuning_params::Vector{Float64}
 
-    atom_motion=true,
-    free_motion=true,
-    laser_noise=true,
-    spontaneous_decay=true,
-    θr=0.0,
-    θb=0.0,
-    n=1
-    )
-    N = length(samples);
+    decay_params::Vector{Float64}
+    atom_motion::Bool
+    free_motion::Bool
+    laser_noise::Bool
+    spontaneous_decay::Bool
+    θr::Float64
+    θb::Float64
 
-    ωr, ωz = trap_frequencies(atom_params, trap_params);
-    Δ0, δ0 = detuning_params;
+    n::Int64
+end
 
-    if spontaneous_decay
-        decay_params_temp = decay_params;
+
+function simulation(cfg::RydbergConfig)
+    N = length(cfg.samples);
+
+    ωr, ωz = trap_frequencies(cfg.atom_params, cfg.trap_params);
+    Δ0, δ0 = cfg.detuning_params;
+
+    if cfg.spontaneous_decay
+        Γg, Γgt = cfg.decay_params
     else
-        decay_params_temp = [0.0, 0.0];
+        Γg, Γgt = 0.0, 0.0
     end;
-
-    Γg, Γgt = decay_params_temp;
+    
     J, Jdagger = [sqrt(Γg)*σgp, sqrt(Γgt)*σgtp], [sqrt(Γg)*σpg, sqrt(Γgt)*σpgt];
 
-    ρ0 = ψ0 ⊗ dagger(ψ0);
+    ρ0 = cfg.ψ0 ⊗ dagger(cfg.ψ0);
 
     #Density matrix averaged over realizations of laser noise and atom dynamics.
-    ρ_mean = [zero(ψ0 ⊗ dagger(ψ0)) for _ ∈ 1:length(tspan)];
-    ρ_temp = [zero(ψ0 ⊗ dagger(ψ0)) for _ ∈ 1:length(tspan)];
-
+    ρ_mean = [zero(ρ0) for _ ∈ 1:length(cfg.tspan)];
+    ρ_temp = [zero(ρ0) for _ ∈ 1:length(cfg.tspan)];
     #Second moment for error estimation of level populations. 
-    ρ2_mean = [zero(ψ0 ⊗ dagger(ψ0)) for _ ∈ 1:length(tspan)];
+    ρ2_mean = [zero(ρ0) for _ ∈ 1:length(cfg.tspan)];
 
-    tspan_noise = [0.0:tspan[end]/1000:tspan[end];];
+    tspan_noise = [0.0:cfg.tspan[end]/1000:cfg.tspan[end];];
     nodes = (tspan_noise, );
 
-    if laser_noise
-        red_laser_phase_amplitudes_temp = red_laser_phase_amplitudes;
-        blue_laser_phase_amplitudes_temp = blue_laser_phase_amplitudes;
+    if cfg.laser_noise
+        red_laser_phase_amplitudes_temp = cfg.red_laser_phase_amplitudes;
+        blue_laser_phase_amplitudes_temp = cfg.blue_laser_phase_amplitudes;
     else
-        red_laser_phase_amplitudes_temp = zero(red_laser_phase_amplitudes);
-        blue_laser_phase_amplitudes_temp = zero(blue_laser_phase_amplitudes);
+        red_laser_phase_amplitudes_temp = zero(cfg.red_laser_phase_amplitudes);
+        blue_laser_phase_amplitudes_temp = zero(cfg.blue_laser_phase_amplitudes);
     end;
 
-    
+    xi, yi, zi, vxi, vyi, vzi = zeros(6);
     for i ∈ 1:N
-        if atom_motion
-            #Atom initial conditions
-            xi, yi, zi, vxi, vyi, vzi = samples[i];
-        else
-            xi, yi, zi, vxi, vyi, vzi = zeros(6);
-        end;
+        if cfg.atom_motion
+            xi, yi, zi, vxi, vyi, vzi = cfg.samples[i];
+        end
         
         #Atom trajectories
-        X = t -> R(t, xi, vxi, ωr; free=free_motion);
-        Y = t -> R(t, yi, vyi, ωr; free=free_motion);
-        Z = t -> R(t, zi, vzi, ωz; free=free_motion);
-        Vx = t -> V(t, xi, vxi, ωr; free=free_motion);
-        Vz = t -> V(t, zi, vzi, ωz; free=free_motion);
+        X = t -> R(t, xi, vxi, ωr; free=cfg.free_motion);
+        Y = t -> R(t, yi, vyi, ωr; free=cfg.free_motion);
+        Z = t -> R(t, zi, vzi, ωz; free=cfg.free_motion);
+        Vx = t -> V(t, xi, vxi, ωr; free=cfg.free_motion);
+        Vz = t -> V(t, zi, vzi, ωz; free=cfg.free_motion);
         
- 
         #Generate phase noise traces for red and blue lasers
-        ϕ_red_res = ϕ(tspan_noise, f, red_laser_phase_amplitudes_temp);
-        ϕ_blue_res = ϕ(tspan_noise, f, blue_laser_phase_amplitudes_temp);
+        ϕ_red_res = ϕ(tspan_noise, cfg.f, red_laser_phase_amplitudes_temp);
+        ϕ_blue_res = ϕ(tspan_noise, cfg.f, blue_laser_phase_amplitudes_temp);
 
         #Interpolate phase noise traces to pass to hamiltonian
         ϕ_red = interpolate(nodes, ϕ_red_res, Gridded(Linear()));
@@ -220,28 +168,24 @@ function simulation(
         #Hamiltonian params trajectories
         Ht = TimeDependentSum(
         [
-            t -> -Δ(Vx(t), Vz(t), red_laser_params; θ=θr) - Δ0,
-            t -> -δ(Vx(t), Vz(t), red_laser_params, blue_laser_params; θr=θr, θb=θb) - δ0,
-            t -> exp(1.0im * ϕ_red(t)) * Ω(X(t), Y(t), Z(t), red_laser_params; n=n, θ=θr) / 2.0,
-            t -> conj(exp(1.0im * ϕ_red(t)) * Ω(X(t), Y(t), Z(t), red_laser_params; n=n, θ=θr) / 2.0),
-            t -> exp(1.0im * ϕ_blue(t)) * Ω(X(t), Y(t), Z(t), blue_laser_params; n=n, θ=θb) / 2.0,
-            t -> conj(exp(1.0im * ϕ_blue(t)) * Ω(X(t), Y(t), Z(t), blue_laser_params; n=n, θ=θb) / 2.0)
+            t -> -Δ(Vx(t), Vz(t), cfg.red_laser_params; θ=cfg.θr) - Δ0,
+            t -> -δ(Vx(t), Vz(t), cfg.red_laser_params, cfg.blue_laser_params; θr=cfg.θr, θb=cfg.θb) - δ0,
+            t -> exp(1.0im * ϕ_red(t)) * Ω(X(t), Y(t), Z(t), cfg.red_laser_params; n=cfg.n, θ=cfg.θr) / 2.0,
+            t -> conj(exp(1.0im * ϕ_red(t)) * Ω(X(t), Y(t), Z(t), cfg.red_laser_params; n=cfg.n, θ=cfg.θr) / 2.0),
+            t -> exp(1.0im * ϕ_blue(t)) * Ω(X(t), Y(t), Z(t), cfg.blue_laser_params; n=cfg.n, θ=cfg.θb) / 2.0,
+            t -> conj(exp(1.0im * ϕ_blue(t)) * Ω(X(t), Y(t), Z(t), cfg.blue_laser_params; n=cfg.n, θ=cfg.θb) / 2.0)
         ],
         operators
         );
 
-        # #Returns hamiltonian and jump operators in a form required by timeevolution.master_dynamic
-        function super_operator(t, rho)
-            return Ht, J, Jdagger;
-        end;
-        
-        _, ρ_temp = timeevolution.master_dynamic(tspan, ρ0, super_operator);
+        super_operator(t, rho) = Ht, J, Jdagger
+        _, ρ_temp = timeevolution.master_dynamic(cfg.tspan, ρ0, super_operator);
 
-        ρ_mean = ρ_mean + ρ_temp;
-        ρ2_mean = ρ2_mean + ρ_temp .^ 2;
+        ρ_mean .+= ρ_temp
+        ρ2_mean .+= ρ_temp .^ 2
     end;
 
-    return ρ_mean/N, ρ2_mean/N
+    return ρ_mean ./ N, ρ2_mean ./ N
 end;
 
 function Ω_twophoton(Ωr, Ωb, Δ)
@@ -249,7 +193,7 @@ function Ω_twophoton(Ωr, Ωb, Δ)
 end;
 
 function T_twophoton(Ωr, Ωb, Δ)
-    return 2.0*π / Ω_twophoton(Ωr, Ωb, Δ);
+    return 2.0*π / Ω_twophoton(Ωr, Ωb, Δ)
 end;
 
 function δ_twophoton(Ωr, Ωb, Δ)
