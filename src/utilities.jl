@@ -100,7 +100,7 @@ function plot_rydberg_probs(tspan, probs_dict)
     names = ["g", "p", "r", "gt"];
     colors = ["blue", "orange", "red", "green"];
 
-    plt = plot()
+    plt = Plots.plot()
     for i in 1:4
         P = probs_dict["P"*names[i]]
         S = probs_dict["S"*names[i]]

@@ -92,7 +92,7 @@ mutable struct RydbergConfig
 
     atom_params::Vector{Float64}
     trap_params::Vector{Float64}
-    samples::Vector{Vector{Float64}}
+    n_samples::Int64
 
     f::Vector{Float64}
     red_laser_phase_amplitudes::Vector{Float64}
@@ -102,67 +102,60 @@ mutable struct RydbergConfig
     blue_laser_params::Vector{Float64}
     
     detuning_params::Vector{Float64}
-
     decay_params::Vector{Float64}
     atom_motion::Bool
     free_motion::Bool
     laser_noise::Bool
-    spontaneous_decay::Bool
+    spontaneous_decay_intermediate::Bool
+    spontaneous_decay_rydberg::Bool
 end
 
 
 function simulation(cfg::RydbergConfig)
-    N = length(cfg.samples);
+    samples = samples_generate(
+        cfg.trap_params,
+        cfg.atom_params,
+        cfg.n_samples;
+        harmonic=false
+        )[1]
 
     ωr, ωz = trap_frequencies(cfg.atom_params, cfg.trap_params);
     Δ0, δ0 = cfg.detuning_params;
 
-    if cfg.spontaneous_decay
-        Γg, Γgt = cfg.decay_params
-    else
-        Γg, Γgt = 0.0, 0.0
-    end;
-    
-    J, Jdagger = [sqrt(Γg)*σgp, sqrt(Γgt)*σgtp], [sqrt(Γg)*σpg, sqrt(Γgt)*σpgt];
+    Γg, Γgt = cfg.spontaneous_decay_intermediate ? cfg.decay_params[1:2] : [0.0, 0.0]
+    Γr      = cfg.spontaneous_decay_rydberg      ? cfg.decay_params[3]   :  0.0
+    decay_params = [Γg, Γgt, Γr]
+    J, Jdagger = JumpOperators(decay_params)
 
     ρ0 = cfg.ψ0 ⊗ dagger(cfg.ψ0);
 
     #Density matrix averaged over realizations of laser noise and atom dynamics.
-    ρ_mean = [zero(ρ0) for _ ∈ 1:length(cfg.tspan)];
-    ρ_temp = [zero(ρ0) for _ ∈ 1:length(cfg.tspan)];
+    ρ_mean  = [zero(ρ0) for _ ∈ 1:length(cfg.tspan)];
+    ρ_temp  = [zero(ρ0) for _ ∈ 1:length(cfg.tspan)];
     #Second moment for error estimation of level populations. 
     ρ2_mean = [zero(ρ0) for _ ∈ 1:length(cfg.tspan)];
 
     tspan_noise = [0.0:cfg.tspan[end]/1000:cfg.tspan[end];];
     nodes = (tspan_noise, );
+    red_laser_phase_amplitudes_temp  = cfg.laser_noise ? cfg.red_laser_phase_amplitudes  : zero(cfg.red_laser_phase_amplitudes);
+    blue_laser_phase_amplitudes_temp = cfg.laser_noise ? cfg.blue_laser_phase_amplitudes : zero(cfg.blue_laser_phase_amplitudes);
 
-    if cfg.laser_noise
-        red_laser_phase_amplitudes_temp = cfg.red_laser_phase_amplitudes;
-        blue_laser_phase_amplitudes_temp = cfg.blue_laser_phase_amplitudes;
-    else
-        red_laser_phase_amplitudes_temp = zero(cfg.red_laser_phase_amplitudes);
-        blue_laser_phase_amplitudes_temp = zero(cfg.blue_laser_phase_amplitudes);
-    end;
-
-    xi, yi, zi, vxi, vyi, vzi = zeros(6);
     for i ∈ 1:N
-        if cfg.atom_motion
-            xi, yi, zi, vxi, vyi, vzi = cfg.samples[i];
-        end
-        
+        xi, yi, zi, vxi, vyi, vzi = cfg.atom_motion ? samples[i] : zeros(6);
+
         #Atom trajectories
-        X = t -> R(t, xi, vxi, ωr; free=cfg.free_motion);
-        Y = t -> R(t, yi, vyi, ωr; free=cfg.free_motion);
-        Z = t -> R(t, zi, vzi, ωz; free=cfg.free_motion);
+        X  = t -> R(t, xi, vxi, ωr; free=cfg.free_motion);
+        Y  = t -> R(t, yi, vyi, ωr; free=cfg.free_motion);
+        Z  = t -> R(t, zi, vzi, ωz; free=cfg.free_motion);
         Vx = t -> V(t, xi, vxi, ωr; free=cfg.free_motion);
         Vz = t -> V(t, zi, vzi, ωz; free=cfg.free_motion);
         
         #Generate phase noise traces for red and blue lasers
-        ϕ_red_res = ϕ(tspan_noise, cfg.f, red_laser_phase_amplitudes_temp);
+        ϕ_red_res  = ϕ(tspan_noise, cfg.f, red_laser_phase_amplitudes_temp);
         ϕ_blue_res = ϕ(tspan_noise, cfg.f, blue_laser_phase_amplitudes_temp);
 
         #Interpolate phase noise traces to pass to hamiltonian
-        ϕ_red = interpolate(nodes, ϕ_red_res, Gridded(Linear()));
+        ϕ_red  = interpolate(nodes, ϕ_red_res, Gridded(Linear()));
         ϕ_blue = interpolate(nodes, ϕ_blue_res, Gridded(Linear()));
 
 
@@ -185,11 +178,11 @@ function simulation(cfg::RydbergConfig)
         super_operator(t, rho) = Ht, J, Jdagger
         _, ρ_temp = timeevolution.master_dynamic(cfg.tspan, ρ0, super_operator);
 
-        ρ_mean .+= ρ_temp
+        ρ_mean  .+= ρ_temp
         ρ2_mean .+= ρ_temp .^ 2
     end;
 
-    return ρ_mean ./ N, ρ2_mean ./ N
+    return ρ_mean ./ cfg.n_samples, ρ2_mean ./ cfg.n_samples
 end;
 
 function Ω_twophoton(Ωr, Ωb, Δ)

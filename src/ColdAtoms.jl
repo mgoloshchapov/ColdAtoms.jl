@@ -12,6 +12,7 @@ using SpecialPolynomials
 using HypergeometricFunctions
 
 using OrderedCollections
+using Plots
 #using OrdinaryDiffEq
 
 export 
