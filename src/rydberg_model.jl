@@ -22,13 +22,13 @@ const operators = [np, nr, σgp, σpg, σpr, σrp];
 
 
 #Due to atom dynamics
-function Ω(x, y, z, laser_params)
+@inline function Ω(x, y, z, laser_params)
     Ω0, w0, z0, θ, n = laser_params;
     return Ω0 .* A(x, y, z, w0, z0; n=n, θ=θ) .* A_phase(x, y, z, w0, z0; θ=θ);
 end;
 
 #Due to Doppler shift for red laser
-function Δ(vx, vz, laser_params)
+@inline function Δ(vx, vz, laser_params)
     w0, z0, θ = laser_params[2:4]
     k = 2 * z0/w0^2;
 
@@ -38,7 +38,7 @@ function Δ(vx, vz, laser_params)
 end;
 
 #Due to Doppler shifts for red and blue lasers
-function δ(vx, vz, red_laser_params, blue_laser_params)
+@inline function δ(vx, vz, red_laser_params, blue_laser_params)
     wr0, zr0, θr = red_laser_params[2:4];
     wb0, zb0, θb = blue_laser_params[2:4];
     
@@ -78,11 +78,65 @@ end;
 
 
 #Jump operators for master equation 
-function JumpOperators(decay_params)
+@inline function JumpOperators(decay_params)
     Γg, Γgt, Γr = decay_params;
-    return 
-    [sqrt(Γg)*σgp, sqrt(Γgt)*σgtp, sqrt(Γr)*σgtr], 
-    [sqrt(Γg)*σpg, sqrt(Γgt)*σpgt, sqrt(Γr)*σrgt]
+    return [[sqrt(Γg)*σgp, sqrt(Γgt)*σgtp, sqrt(Γr)*σgtr], 
+    [sqrt(Γg)*σpg, sqrt(Γgt)*σpgt, sqrt(Γr)*σrgt]]
+end;
+
+
+@inline function GenerateHamiltonian(
+    sample, 
+    ωr, ωz,
+    free_motion,
+    atom_motion,
+
+    tspan_noise,
+    f,
+    red_laser_phase_amplitudes,
+    blue_laser_phase_amplitudes,
+    nodes,
+
+    red_laser_params,
+    blue_laser_params,
+
+    Δ0, 
+    δ0
+    )
+    # Trajectories
+    xi, yi, zi, vxi, vyi, vzi = atom_motion ? sample : zeros(6);
+    X  = t -> R(t, xi, vxi, ωr; free=free_motion);
+    Y  = t -> R(t, yi, vyi, ωr; free=free_motion);
+    Z  = t -> R(t, zi, vzi, ωz; free=free_motion);
+    Vx = t -> V(t, xi, vxi, ωr; free=free_motion);
+    Vz = t -> V(t, zi, vzi, ωz; free=free_motion);
+
+    # Generate phase noise traces for red and blue lasers
+    ϕ_red_res  = ϕ(tspan_noise, f, red_laser_phase_amplitudes);
+    ϕ_blue_res = ϕ(tspan_noise, f, blue_laser_phase_amplitudes);
+
+    # Interpolate phase noise traces to pass to hamiltonian
+    ϕ_red  = interpolate(nodes, ϕ_red_res, Gridded(Linear()));
+    ϕ_blue = interpolate(nodes, ϕ_blue_res, Gridded(Linear()));
+
+
+    # Hamiltonian params trajectories
+    Ωr = t -> exp(1.0im * ϕ_red(t)) * Ω(X(t), Y(t), Z(t), red_laser_params);
+    Ωb = t -> exp(1.0im * ϕ_blue(t)) * Ω(X(t), Y(t), Z(t), blue_laser_params);
+
+    Ht = TimeDependentSum(
+        [
+            t -> -Δ(Vx(t), Vz(t), red_laser_params) - Δ0,
+            t -> -δ(Vx(t), Vz(t), red_laser_params, blue_laser_params) - δ0,
+            t -> Ωr(t) / 2.0,
+            t -> conj(Ωr(t)) / 2.0,
+            t -> Ωb(t) / 2.0,
+            t -> conj(Ωb(t)) / 2.0,
+        ],
+        operators
+        );
+
+    return Ht
 end;
 
 
@@ -137,43 +191,28 @@ function simulation(cfg::RydbergConfig)
 
     tspan_noise = [0.0:cfg.tspan[end]/1000:cfg.tspan[end];];
     nodes = (tspan_noise, );
-    red_laser_phase_amplitudes_temp  = cfg.laser_noise ? cfg.red_laser_phase_amplitudes  : zero(cfg.red_laser_phase_amplitudes);
-    blue_laser_phase_amplitudes_temp = cfg.laser_noise ? cfg.blue_laser_phase_amplitudes : zero(cfg.blue_laser_phase_amplitudes);
+    red_laser_phase_amplitudes  = cfg.laser_noise ? cfg.red_laser_phase_amplitudes  : zero(cfg.red_laser_phase_amplitudes);
+    blue_laser_phase_amplitudes = cfg.laser_noise ? cfg.blue_laser_phase_amplitudes : zero(cfg.blue_laser_phase_amplitudes);
 
-    for i ∈ 1:N
-        xi, yi, zi, vxi, vyi, vzi = cfg.atom_motion ? samples[i] : zeros(6);
-
-        #Atom trajectories
-        X  = t -> R(t, xi, vxi, ωr; free=cfg.free_motion);
-        Y  = t -> R(t, yi, vyi, ωr; free=cfg.free_motion);
-        Z  = t -> R(t, zi, vzi, ωz; free=cfg.free_motion);
-        Vx = t -> V(t, xi, vxi, ωr; free=cfg.free_motion);
-        Vz = t -> V(t, zi, vzi, ωz; free=cfg.free_motion);
+    for sample in ProgressBars.ProgressBar(samples)
+        Ht = GenerateHamiltonian(
+            sample, 
+            ωr, ωz,
+            cfg.free_motion,
+            cfg.atom_motion,
         
-        #Generate phase noise traces for red and blue lasers
-        ϕ_red_res  = ϕ(tspan_noise, cfg.f, red_laser_phase_amplitudes_temp);
-        ϕ_blue_res = ϕ(tspan_noise, cfg.f, blue_laser_phase_amplitudes_temp);
-
-        #Interpolate phase noise traces to pass to hamiltonian
-        ϕ_red  = interpolate(nodes, ϕ_red_res, Gridded(Linear()));
-        ϕ_blue = interpolate(nodes, ϕ_blue_res, Gridded(Linear()));
-
-
-        #Hamiltonian params trajectories
-        Ωr = t -> exp(1.0im * ϕ_red(t)) * Ω(X(t), Y(t), Z(t), cfg.red_laser_params);
-        Ωb = t -> exp(1.0im * ϕ_blue(t)) * Ω(X(t), Y(t), Z(t), cfg.blue_laser_params);
+            tspan_noise,
+            cfg.f,
+            red_laser_phase_amplitudes,
+            blue_laser_phase_amplitudes,
+            nodes,
         
-        Ht = TimeDependentSum(
-        [
-            t -> -Δ(Vx(t), Vz(t), cfg.red_laser_params) - Δ0,
-            t -> -δ(Vx(t), Vz(t), cfg.red_laser_params, cfg.blue_laser_params) - δ0,
-            t -> Ωr(t) / 2.0,
-            t -> conj(Ωr(t)) / 2.0,
-            t -> Ωb(t) / 2.0,
-            t -> conj(Ωb(t)) / 2.0,
-        ],
-        operators
-        );
+            cfg.red_laser_params,
+            cfg.blue_laser_params,
+        
+            Δ0, 
+            δ0
+            )
 
         super_operator(t, rho) = Ht, J, Jdagger
         _, ρ_temp = timeevolution.master_dynamic(cfg.tspan, ρ0, super_operator);

@@ -108,15 +108,14 @@ function plot_rydberg_probs(tspan, probs_dict)
             tspan, [P P], fillrange=[P+S P-S], 
             ylim=(0.0, 1.0), xlim=(minimum(tspan), maximum(tspan)), 
             fillalpha=0.25, c=colors[i], 
-            label=[nothing "P" * names[i]], linewidth=2)
+            label=[nothing "P" * names[i]], linewidth=2
+            )
     end
     xlabel!("Time, μs")
     ylabel!("Probability")
     title!("Rydberg Rabi oscillations")
 
-
     display(plt)
-    return plt
 end
 
 # #Function for visualisation of samples
