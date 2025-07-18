@@ -28,11 +28,12 @@ function release_evolve(tspan, cord, atom_params, trap_params; eps=1e-3)
     U0, w0, z0 = trap_params;
     
     x = xi .+ vxi * tspan;
-    y = yi .+ vyi * tspan - g0 * tspan .^2;
+    # y = yi .+ vyi * tspan - g0 * tspan .^2;
+    y = yi .+ vyi * tspan;
     z = zi .+ vzi * tspan;
     
     kinetic = K(cord, trap_params, m);
-    potential = U0 .* (1.0 .- A(x, y, z, w0, z0) .^2);
+    potential = U0 .* (1.0 .- A.(x, y, z, w0, z0) .^2);
     recap = (kinetic .+ potential) .< U0 * (1.0-eps);
     
     idx = findfirst(is_zero, recap);
@@ -73,7 +74,7 @@ function release_recapture(tspan, trap_params, atom_params, N; freq=10, skip=100
     recapture = zeros(length(tspan));
     
     for i ∈ 1:N
-        recapture += release_evolve(tspan, samples[i], atom_params, trap_params; eps=eps);
+        recapture .+= release_evolve(tspan, samples[i], atom_params, trap_params; eps=eps);
     end;
     
     return recapture ./ N, acc_rate

@@ -10,10 +10,12 @@ using Interpolations
 using Polynomials
 using SpecialPolynomials
 using HypergeometricFunctions
+
+using OrderedCollections
 #using OrdinaryDiffEq
 
 export 
-    w0_to_z0, trap_frequencies, E, I,
+    w0_to_z0, trap_frequencies, E, I, get_rydberg_probs,
     release_recapture,
     samples_generate, R, V, get_trap_params, H, samples_visualise,
     Sϕ, ϕ_amplitudes, ϕ,

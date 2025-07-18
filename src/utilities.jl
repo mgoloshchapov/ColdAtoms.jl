@@ -80,6 +80,45 @@ function trap_frequencies(atom_params, trap_params)
 end;
 
 
+function get_rydberg_probs(ρ_mean, ρ2_mean)
+    probs_dict = OrderedCollections.OrderedDict{String, Vector{Float64}}();
+
+    names = ["g", "p", "r", "gt"];
+    states = [g, p, r, gt];
+    for i in 1:4
+        P = real(expect(states[i] ⊗ dagger(states[i]), ρ_mean))
+        P2 = real(expect(states[i] ⊗ dagger(states[i]), ρ2_mean))
+        S = @. sqrt(P2 - P^2) / length(ρ_mean)
+        probs_dict["P"*names[i]] = P
+        probs_dict["S"*names[i]] = S 
+    end 
+
+    return probs_dict
+end
+
+function plot_rydberg_probs(tspan, probs_dict)
+    names = ["g", "p", "r", "gt"];
+    colors = ["blue", "orange", "red", "green"];
+
+    plt = plot()
+    for i in 1:4
+        P = probs_dict["P"*names[i]]
+        S = probs_dict["S"*names[i]]
+        plot!(
+            tspan, [P P], fillrange=[P+S P-S], 
+            ylim=(0.0, 1.0), xlim=(minimum(tspan), maximum(tspan)), 
+            fillalpha=0.25, c=colors[i], 
+            label=[nothing "P" * names[i]], linewidth=2)
+    end
+    xlabel!("Time, μs")
+    ylabel!("Probability")
+    title!("Rydberg Rabi oscillations")
+
+
+    display(plt)
+    return plt
+end
+
 # #Function for visualisation of samples
 # function samples_visualise(samples)
 #     x, y, z, vx, vy, vz = invert(samples);

@@ -15,18 +15,21 @@ const nr = r ⊗ dagger(r);
 const σgtp = gt ⊗ dagger(p);
 const σpgt = p ⊗ dagger(gt);
 
+const σgtr = gt ⊗ dagger(r);
+const σrgt = r ⊗ dagger(gt);
+
 const operators = [np, nr, σgp, σpg, σpr, σrp];
 
 
 #Due to atom dynamics
-function Ω(x, y, z, laser_params; n=1, θ=0.0)
-    Ω0, w0, z0 = laser_params;
+function Ω(x, y, z, laser_params)
+    Ω0, w0, z0, θ, n = laser_params;
     return Ω0 .* A(x, y, z, w0, z0; n=n, θ=θ) .* A_phase(x, y, z, w0, z0; θ=θ);
 end;
 
 #Due to Doppler shift for red laser
-function Δ(vx, vz, laser_params; θ=0.0)
-    Ω0, w0, z0 = laser_params
+function Δ(vx, vz, laser_params)
+    w0, z0, θ = laser_params[2:4]
     k = 2 * z0/w0^2;
 
     Δx = k * sin(θ) * vx
@@ -35,9 +38,9 @@ function Δ(vx, vz, laser_params; θ=0.0)
 end;
 
 #Due to Doppler shifts for red and blue lasers
-function δ(vx, vz, red_laser_params, blue_laser_params; θr=0.0, θb=0.0)
-    Ωr0, wr0, zr0 = red_laser_params;
-    Ωb0, wb0, zb0 = blue_laser_params;
+function δ(vx, vz, red_laser_params, blue_laser_params)
+    wr0, zr0, θr = red_laser_params[2:4];
+    wb0, zb0, θb = blue_laser_params[2:4];
     
     kr = 2 * zr0/wr0^2;
     kb = 2 * zb0/wb0^2;
@@ -47,7 +50,6 @@ function δ(vx, vz, red_laser_params, blue_laser_params; θr=0.0, θb=0.0)
 
     return δx + δz
 end;
-
 
 
 #Two-photon Rydberg hamiltonian for 1 atom
@@ -77,8 +79,10 @@ end;
 
 #Jump operators for master equation 
 function JumpOperators(decay_params)
-    Γg, Γgt = decay_params;
-    return [sqrt(Γg)*σgp, sqrt(Γgt)*σgtp], [sqrt(Γg)*σpg, sqrt(Γgt)*σpgt]
+    Γg, Γgt, Γr = decay_params;
+    return 
+    [sqrt(Γg)*σgp, sqrt(Γgt)*σgtp, sqrt(Γr)*σgtr], 
+    [sqrt(Γg)*σpg, sqrt(Γgt)*σpgt, sqrt(Γr)*σrgt]
 end;
 
 
@@ -104,10 +108,6 @@ mutable struct RydbergConfig
     free_motion::Bool
     laser_noise::Bool
     spontaneous_decay::Bool
-    θr::Float64
-    θb::Float64
-
-    n::Int64
 end
 
 
@@ -165,15 +165,19 @@ function simulation(cfg::RydbergConfig)
         ϕ_red = interpolate(nodes, ϕ_red_res, Gridded(Linear()));
         ϕ_blue = interpolate(nodes, ϕ_blue_res, Gridded(Linear()));
 
+
         #Hamiltonian params trajectories
+        Ωr = t -> exp(1.0im * ϕ_red(t)) * Ω(X(t), Y(t), Z(t), cfg.red_laser_params);
+        Ωb = t -> exp(1.0im * ϕ_blue(t)) * Ω(X(t), Y(t), Z(t), cfg.blue_laser_params);
+        
         Ht = TimeDependentSum(
         [
-            t -> -Δ(Vx(t), Vz(t), cfg.red_laser_params; θ=cfg.θr) - Δ0,
-            t -> -δ(Vx(t), Vz(t), cfg.red_laser_params, cfg.blue_laser_params; θr=cfg.θr, θb=cfg.θb) - δ0,
-            t -> exp(1.0im * ϕ_red(t)) * Ω(X(t), Y(t), Z(t), cfg.red_laser_params; n=cfg.n, θ=cfg.θr) / 2.0,
-            t -> conj(exp(1.0im * ϕ_red(t)) * Ω(X(t), Y(t), Z(t), cfg.red_laser_params; n=cfg.n, θ=cfg.θr) / 2.0),
-            t -> exp(1.0im * ϕ_blue(t)) * Ω(X(t), Y(t), Z(t), cfg.blue_laser_params; n=cfg.n, θ=cfg.θb) / 2.0,
-            t -> conj(exp(1.0im * ϕ_blue(t)) * Ω(X(t), Y(t), Z(t), cfg.blue_laser_params; n=cfg.n, θ=cfg.θb) / 2.0)
+            t -> -Δ(Vx(t), Vz(t), cfg.red_laser_params) - Δ0,
+            t -> -δ(Vx(t), Vz(t), cfg.red_laser_params, cfg.blue_laser_params) - δ0,
+            t -> Ωr(t) / 2.0,
+            t -> conj(Ωr(t)) / 2.0,
+            t -> Ωb(t) / 2.0,
+            t -> conj(Ωb(t)) / 2.0,
         ],
         operators
         );
