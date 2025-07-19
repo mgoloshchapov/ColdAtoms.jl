@@ -10,7 +10,7 @@ using Interpolations
 using Polynomials
 using SpecialPolynomials
 using HypergeometricFunctions
-
+using Distributed
 using OrderedCollections
 using Plots
 using ProgressBars

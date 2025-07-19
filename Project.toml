@@ -4,6 +4,7 @@ authors = ["Mikhail Goloshchapov"]
 version = "0.1.0-DEV"
 
 [deps]
+Distributed = "8ba89e20-285c-5b6f-9357-94700520ee1b"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 HypergeometricFunctions = "34004b35-14d8-5ef3-9330-4cdb6864b03a"
 Interpolations = "a98d9a8b-a2ab-59e6-89dd-64a1c18fca59"
@@ -21,6 +22,7 @@ SplitApplyCombine = "03a91e81-4c3e-53e1-a0a4-9c0c8f19dd66"
 Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 
 [compat]
+Distributed = "1.11.0"
 Distributions = "0.25.118"
 HypergeometricFunctions = "0.3.28"
 Interpolations = "0.15.1"
