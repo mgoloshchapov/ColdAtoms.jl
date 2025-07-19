@@ -22,7 +22,7 @@ export
     samples_generate, R, V, get_trap_params, H, samples_visualise,
     Sϕ, ϕ_amplitudes, ϕ,
     simulation, Ω_twophoton, T_twophoton, δ_twophoton, Ωr_required, 
-    g, p, r, gt,
+    ket_0, ket_1, ket_r, ket_p, ket_l,
     simple_flattopHG_field,simple_flattopLG_field,
     HG_coeff, simulation_blue_intens,
     g1, p1, r1, gt1, zero1,

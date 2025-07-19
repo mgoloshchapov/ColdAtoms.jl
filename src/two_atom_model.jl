@@ -7,37 +7,37 @@ const r1 = nlevelstate(basis4, 3);
 const gt1 = nlevelstate(basis4, 4);
 const zero1 = nlevelstate(basis4, 5);
 
-const Id = g1 ⊗ dagger(g1) .+ p1 ⊗ dagger(p1) .+ r1 ⊗ dagger(r1) .+ gt1 ⊗ dagger(gt1) .+ zero1 ⊗ dagger(zero1)
+const Id1 = g1 ⊗ dagger(g1) .+ p1 ⊗ dagger(p1) .+ r1 ⊗ dagger(r1) .+ gt1 ⊗ dagger(gt1) .+ zero1 ⊗ dagger(zero1)
 
 #1 Operator
-const σgp1 = g1 ⊗ dagger(p1) ⊗ Id;
-const σpg1 = p1 ⊗ dagger(g1) ⊗ Id;
-const σpr1 = p1 ⊗ dagger(r1) ⊗ Id;
-const σrp1 = r1 ⊗ dagger(p1) ⊗ Id;
-const np1 = p1 ⊗ dagger(p1) ⊗ Id; 
-const nr1 = r1 ⊗ dagger(r1) ⊗ Id;
-const zz1 = zero1 ⊗ dagger(zero1) ⊗ Id ;
+const σgp1 = g1 ⊗ dagger(p1) ⊗ Id1;
+const σpg1 = p1 ⊗ dagger(g1) ⊗ Id1;
+const σpr1 = p1 ⊗ dagger(r1) ⊗ Id1;
+const σrp1 = r1 ⊗ dagger(p1) ⊗ Id1;
+const np1 = p1 ⊗ dagger(p1) ⊗ Id1; 
+const nr1 = r1 ⊗ dagger(r1) ⊗ Id1;
+const zz1 = zero1 ⊗ dagger(zero1) ⊗ Id1 ;
 #decay
-const σgtp1 = gt1 ⊗ dagger(p1) ⊗ Id;
-const σpgt1 = p1 ⊗ dagger(gt1) ⊗ Id;
+const σgtp1 = gt1 ⊗ dagger(p1) ⊗ Id1;
+const σpgt1 = p1 ⊗ dagger(gt1) ⊗ Id1;
 
 #2 Operators
-const σgp2 = Id ⊗ g1 ⊗ dagger(p1);
-const σpg2 = Id ⊗ p1 ⊗ dagger(g1);
-const σpr2 = Id ⊗ p1 ⊗ dagger(r1);
-const σrp2 = Id ⊗ r1 ⊗ dagger(p1);
-const np2 = Id ⊗ p1 ⊗ dagger(p1);
-const nr2 = Id ⊗ r1 ⊗ dagger(r1);
+const σgp2 = Id1 ⊗ g1 ⊗ dagger(p1);
+const σpg2 = Id1 ⊗ p1 ⊗ dagger(g1);
+const σpr2 = Id1 ⊗ p1 ⊗ dagger(r1);
+const σrp2 = Id1 ⊗ r1 ⊗ dagger(p1);
+const np2 = Id1 ⊗ p1 ⊗ dagger(p1);
+const nr2 = Id1 ⊗ r1 ⊗ dagger(r1);
 #decay
-const σgtp2 = Id ⊗ gt1 ⊗ dagger(p1);
-const σpgt2 = Id ⊗ p1 ⊗ dagger(gt1);
+const σgtp2 = Id1 ⊗ gt1 ⊗ dagger(p1);
+const σpgt2 = Id1 ⊗ p1 ⊗ dagger(gt1);
 const rr = r1 ⊗ dagger(r1) ⊗ r1 ⊗ dagger(r1);
-const zz2 = Id ⊗ zero1 ⊗ dagger(zero1);
+const zz2 = Id1 ⊗ zero1 ⊗ dagger(zero1);
 #direct 
-const σgr1 = g1 ⊗ dagger(r1) ⊗ Id;
-const σrg1 = r1 ⊗ dagger(g1) ⊗ Id;
-const σgr2 = Id ⊗ g1 ⊗ dagger(r1);
-const σrg2 = Id ⊗ r1 ⊗ dagger(g1);
+const σgr1 = g1 ⊗ dagger(r1) ⊗ Id1;
+const σrg1 = r1 ⊗ dagger(g1) ⊗ Id1;
+const σgr2 = Id1 ⊗ g1 ⊗ dagger(r1);
+const σrg2 = Id1 ⊗ r1 ⊗ dagger(g1);
 
 const two_atom_operators = [zz1, zz2, np1, nr1, σgp1, σpg1, σpr1, σrp1, np2, nr2, σgp2, σpg2, σpr2, σrp2, rr];
 const direct_operators = [zz1, zz2, nr1, nr2, σgr1, σrg1, σgr2, σrg2, rr]

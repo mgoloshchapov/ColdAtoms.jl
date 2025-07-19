@@ -1,24 +1,28 @@
 #Basis states
-const basis = NLevelBasis(4);
-const g = nlevelstate(basis, 1);
-const p = nlevelstate(basis, 2);
-const r = nlevelstate(basis, 3);
-const gt = nlevelstate(basis, 4);
+const basis = NLevelBasis(5);
+const ket_0 = nlevelstate(basis, 1);
+const ket_1 = nlevelstate(basis, 2);
+const ket_r = nlevelstate(basis, 3);
+const ket_p = nlevelstate(basis, 4);
+const ket_l = nlevelstate(basis, 5);
 
 #Operators
-const σgp = g ⊗ dagger(p);
-const σpg = p ⊗ dagger(g);
-const σpr = p ⊗ dagger(r);
-const σrp = r ⊗ dagger(p);
-const np = p ⊗ dagger(p);
-const nr = r ⊗ dagger(r);
-const σgtp = gt ⊗ dagger(p);
-const σpgt = p ⊗ dagger(gt);
+const Id  = identityoperator(basis);
+const σ0p = ket_0 ⊗ dagger(ket_p);
+const σp0 = ket_p ⊗ dagger(ket_0);
+const σ1p = ket_1 ⊗ dagger(ket_p);
+const σp1 = ket_p ⊗ dagger(ket_1);
+const σpr = ket_p ⊗ dagger(ket_r);
+const σrp = ket_r ⊗ dagger(ket_p);
+const np  = ket_p ⊗ dagger(ket_p);
+const nr  = ket_r ⊗ dagger(ket_r);
+const σlp = ket_l ⊗ dagger(ket_p);
+const σpl = ket_p ⊗ dagger(ket_l);
 
-const σgtr = gt ⊗ dagger(r);
-const σrgt = r ⊗ dagger(gt);
+const σlr = ket_l ⊗ dagger(ket_r);
+const σrl = ket_r ⊗ dagger(ket_l);
 
-const operators = [np, nr, σgp, σpg, σpr, σrp];
+const operators = [np, nr, σ1p, σp1, σpr, σrp];
 
 
 #Due to atom dynamics
@@ -30,7 +34,7 @@ end;
 #Due to Doppler shift for red laser
 @inline function Δ(vx, vz, laser_params)
     w0, z0, θ = laser_params[2:4]
-    k = 2 * z0/w0^2;
+    k = 2.0 * z0/w0^2;
 
     Δx = k * sin(θ) * vx
     Δz = k * cos(θ) * vz
@@ -42,8 +46,8 @@ end;
     wr0, zr0, θr = red_laser_params[2:4];
     wb0, zb0, θb = blue_laser_params[2:4];
     
-    kr = 2 * zr0/wr0^2;
-    kb = 2 * zb0/wb0^2;
+    kr = 2.0 * zr0/wr0^2;
+    kb = 2.0 * zb0/wb0^2;
 
     δx = (kr*sin(θr) + kb*sin(θb))*vx
     δz = (kr*cos(θr) + kb*cos(θb))*vz 
@@ -51,36 +55,16 @@ end;
     return δx + δz
 end;
 
-
-#Two-photon Rydberg hamiltonian for 1 atom
-function Hamiltonian(Ωr, Ωb, Δ, δ)
-    return TimeDependentSum(
-        [
-            t -> -Δ(t),
-            t -> -δ(t),
-            t -> Ωr(t) ./2.0,
-            t -> conj.(Ωr(t)) ./2.0,
-            t -> Ωb(t)/2.0,
-            t -> conj.(Ωb(t)) ./2.0,
-        ],
-        
-        [
-            np,
-            nr,
-            σgp,
-            σpg,
-            σpr,
-            σrp  
-        ]
-    )
-end;
-
+### Change operators
 #Jump operators for master equation 
 @inline function JumpOperators(decay_params)
-    Γg, Γgt, Γr = decay_params;
-    return [[sqrt(Γg)*σgp, sqrt(Γgt)*σgtp, sqrt(Γr)*σgtr], 
-    [sqrt(Γg)*σpg, sqrt(Γgt)*σpgt, sqrt(Γr)*σrgt]]
+    Γ0, Γ1, Γl, Γr = decay_params;
+    return [
+        [sqrt(Γ0)*σ0p, sqrt(Γ1)*σ1p, sqrt(Γl)*σlp, sqrt(Γr)*σlr], 
+        [sqrt(Γ0)*σp0, sqrt(Γ1)*σp1, sqrt(Γl)*σpl, sqrt(Γr)*σrl]
+        ]
 end;
+
 
 @inline function GenerateHamiltonian(
     sample, 
@@ -161,6 +145,7 @@ mutable struct RydbergConfig
     spontaneous_decay_rydberg::Bool
 end
 
+
 function simulation(cfg::RydbergConfig)
     samples = samples_generate(
         cfg.trap_params,
@@ -172,18 +157,18 @@ function simulation(cfg::RydbergConfig)
     ωr, ωz = trap_frequencies(cfg.atom_params, cfg.trap_params);
     Δ0, δ0 = cfg.detuning_params;
 
-    Γg, Γgt = cfg.spontaneous_decay_intermediate ? cfg.decay_params[1:2] : [0.0, 0.0]
-    Γr      = cfg.spontaneous_decay_rydberg      ? cfg.decay_params[3]   :  0.0
-    decay_params = [Γg, Γgt, Γr]
-    J, Jdagger = JumpOperators(decay_params)
+    Γ0, Γ1, Γl   = cfg.spontaneous_decay_intermediate ? cfg.decay_params[1:3] : zeros(3)
+    Γr           = cfg.spontaneous_decay_rydberg      ? cfg.decay_params[4]   :  0.0
+    decay_params = [Γ0, Γ1, Γl, Γr]
+    J, Jdagger   = JumpOperators(decay_params)
 
     ρ0 = cfg.ψ0 ⊗ dagger(cfg.ψ0);
 
     #Density matrix averaged over realizations of laser noise and atom dynamics.
-    ρ_mean  = [zero(ρ0) for _ ∈ 1:length(cfg.tspan)];
-    ρ_temp  = [zero(ρ0) for _ ∈ 1:length(cfg.tspan)];
+    ρ  = [zero(ρ0) for _ ∈ 1:length(cfg.tspan)];
+    ρt  = [zero(ρ0) for _ ∈ 1:length(cfg.tspan)];
     #Second moment for error estimation of level populations. 
-    ρ2_mean = [zero(ρ0) for _ ∈ 1:length(cfg.tspan)];
+    ρ2 = [zero(ρ0) for _ ∈ 1:length(cfg.tspan)];
 
     tspan_noise = [0.0:cfg.tspan[end]/1000:cfg.tspan[end];];
     nodes = (tspan_noise, );
@@ -211,13 +196,13 @@ function simulation(cfg::RydbergConfig)
             )
 
         super_operator(t, rho) = Ht, J, Jdagger
-        _, ρ_temp = timeevolution.master_dynamic(cfg.tspan, ρ0, super_operator);
+        _, ρt = timeevolution.master_dynamic(cfg.tspan, ρ0, super_operator);
 
-        ρ_mean  .+= ρ_temp
-        ρ2_mean .+= ρ_temp .^ 2
+        ρ  .+= ρt
+        ρ2 .+= ρt .^ 2
     end;
 
-    return ρ_mean ./ cfg.n_samples, ρ2_mean ./ cfg.n_samples
+    return ρ ./ cfg.n_samples, ρ2 ./ cfg.n_samples
 end;
 
 function Ω_twophoton(Ωr, Ωb, Δ)
@@ -234,71 +219,4 @@ end;
 
 function Ωr_required(Ω, Ωb, Δ)
     return 2.0 * Δ * Ω / Ωb
-end;
-
-
-function simulation_parallel(num_procs, cfg::RydbergConfig)
-    samples = samples_generate(
-        cfg.trap_params,
-        cfg.atom_params,
-        cfg.n_samples;
-        harmonic=false
-        )[1]
-
-    ωr, ωz = trap_frequencies(cfg.atom_params, cfg.trap_params);
-    Δ0, δ0 = cfg.detuning_params;
-
-    Γg, Γgt = cfg.spontaneous_decay_intermediate ? cfg.decay_params[1:2] : [0.0, 0.0]
-    Γr      = cfg.spontaneous_decay_rydberg      ? cfg.decay_params[3]   :  0.0
-    decay_params = [Γg, Γgt, Γr]
-    J, Jdagger = JumpOperators(decay_params)
-
-    ρ0 = cfg.ψ0 ⊗ dagger(cfg.ψ0);
-
-    #Density matrix averaged over realizations of laser noise and atom dynamics.
-    ρ_mean  = [zero(ρ0) for _ ∈ 1:length(cfg.tspan)];
-    ρ_temp  = [zero(ρ0) for _ ∈ 1:length(cfg.tspan)];
-    #Second moment for error estimation of level populations. 
-    ρ2_mean = [zero(ρ0) for _ ∈ 1:length(cfg.tspan)];
-
-    tspan_noise = [0.0:cfg.tspan[end]/1000:cfg.tspan[end];];
-    nodes = (tspan_noise, );
-    red_laser_phase_amplitudes  = cfg.laser_noise ? cfg.red_laser_phase_amplitudes  : zero(cfg.red_laser_phase_amplitudes);
-    blue_laser_phase_amplitudes = cfg.laser_noise ? cfg.blue_laser_phase_amplitudes : zero(cfg.blue_laser_phase_amplitudes);
-
-    using Distributed
-    addprocs(num_procs)  # Adjust the number of workers as needed
-
-    #@everywhere 
-    function parallel_evolution(smpl)
-        Ht = GenerateHamiltonian(
-            smpl,  ωr, ωz,
-            cfg.free_motion,  cfg.atom_motion,
-        
-            tspan_noise, cfg.f,
-            red_laser_phase_amplitudes,
-            blue_laser_phase_amplitudes,
-            nodes,
-        
-            cfg.red_laser_params,
-            cfg.blue_laser_params,
-        
-            Δ0, δ0
-            )
-
-        super_operator(t, rho) = Ht, J, Jdagger
-        _, ρ_temp = timeevolution.master_dynamic(cfg.tspan, ρ0, super_operator);
-        return ρ_temp
-    end
-
-    results = pmap(parallel_evolution, smpl)
-    #println(results)
-    for res in results
-        ρ_mean  .+= res
-        ρ2_mean .+= res .^ 2
-    end;
-
-    rmprocs(workers())
-
-    return ρ_mean ./ cfg.n_samples, ρ2_mean ./ cfg.n_samples
 end;
