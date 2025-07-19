@@ -1,24 +1,27 @@
 #Basis states
-const basis = NLevelBasis(4);
-const g = nlevelstate(basis, 1);
-const p = nlevelstate(basis, 2);
-const r = nlevelstate(basis, 3);
-const gt = nlevelstate(basis, 4);
+const basis = NLevelBasis(5);
+const ket_0 = nlevelstate(basis, 1);
+const ket_1 = nlevelstate(basis, 2);
+const ket_r = nlevelstate(basis, 3);
+const ket_p = nlevelstate(basis, 4);
+const ket_l = nlevelstate(basis, 5);
 
 #Operators
-const σgp = g ⊗ dagger(p);
-const σpg = p ⊗ dagger(g);
-const σpr = p ⊗ dagger(r);
-const σrp = r ⊗ dagger(p);
-const np = p ⊗ dagger(p);
-const nr = r ⊗ dagger(r);
-const σgtp = gt ⊗ dagger(p);
-const σpgt = p ⊗ dagger(gt);
+const σ0p = ket_0 ⊗ dagger(ket_p);
+const σp0 = ket_p ⊗ dagger(ket_0);
+const σ1p = ket_1 ⊗ dagger(ket_p);
+const σp1 = ket_p ⊗ dagger(ket_1);
+const σpr = ket_p ⊗ dagger(ket_r);
+const σrp = ket_r ⊗ dagger(ket_p);
+const np  = ket_p ⊗ dagger(ket_p);
+const nr  = ket_r ⊗ dagger(ket_r);
+const σlp = ket_l ⊗ dagger(ket_p);
+const σpl = ket_p ⊗ dagger(ket_l);
 
-const σgtr = gt ⊗ dagger(r);
-const σrgt = r ⊗ dagger(gt);
+const σlr = ket_l ⊗ dagger(ket_r);
+const σrl = ket_r ⊗ dagger(ket_l);
 
-const operators = [np, nr, σgp, σpg, σpr, σrp];
+const operators = [np, nr, σ1p, σp1, σpr, σrp];
 
 
 #Due to atom dynamics
@@ -30,7 +33,7 @@ end;
 #Due to Doppler shift for red laser
 @inline function Δ(vx, vz, laser_params)
     w0, z0, θ = laser_params[2:4]
-    k = 2 * z0/w0^2;
+    k = 2.0 * z0/w0^2;
 
     Δx = k * sin(θ) * vx
     Δz = k * cos(θ) * vz
@@ -42,8 +45,8 @@ end;
     wr0, zr0, θr = red_laser_params[2:4];
     wb0, zb0, θb = blue_laser_params[2:4];
     
-    kr = 2 * zr0/wr0^2;
-    kb = 2 * zb0/wb0^2;
+    kr = 2.0 * zr0/wr0^2;
+    kb = 2.0 * zb0/wb0^2;
 
     δx = (kr*sin(θr) + kb*sin(θb))*vx
     δz = (kr*cos(θr) + kb*cos(θb))*vz 
@@ -51,32 +54,7 @@ end;
     return δx + δz
 end;
 
-
-#Two-photon Rydberg hamiltonian for 1 atom
-function Hamiltonian(Ωr, Ωb, Δ, δ)
-    return TimeDependentSum(
-        [
-            t -> -Δ(t),
-            t -> -δ(t),
-            t -> Ωr(t) ./2.0,
-            t -> conj.(Ωr(t)) ./2.0,
-            t -> Ωb(t)/2.0,
-            t -> conj.(Ωb(t)) ./2.0,
-        ],
-        
-        [
-            np,
-            nr,
-            σgp,
-            σpg,
-            σpr,
-            σrp  
-        ]
-    )
-end;
-
-
-
+### Change operators
 #Jump operators for master equation 
 @inline function JumpOperators(decay_params)
     Γg, Γgt, Γr = decay_params;
