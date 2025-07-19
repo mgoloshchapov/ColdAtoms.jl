@@ -27,7 +27,8 @@ export
     HG_coeff, simulation_blue_intens,
     g1, p1, r1, gt1, zero1,
     Id, two_atom_simulation,
-    direct_CZ_simulation
+    direct_CZ_simulation,
+    simulation_parallel
         
 include("utilities.jl")
 include("basic_experiments.jl")

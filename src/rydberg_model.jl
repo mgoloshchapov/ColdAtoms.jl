@@ -75,15 +75,12 @@ function Hamiltonian(Ωr, Ωb, Δ, δ)
     )
 end;
 
-
-
 #Jump operators for master equation 
 @inline function JumpOperators(decay_params)
     Γg, Γgt, Γr = decay_params;
     return [[sqrt(Γg)*σgp, sqrt(Γgt)*σgtp, sqrt(Γr)*σgtr], 
     [sqrt(Γg)*σpg, sqrt(Γgt)*σpgt, sqrt(Γr)*σrgt]]
 end;
-
 
 @inline function GenerateHamiltonian(
     sample, 
@@ -164,7 +161,6 @@ mutable struct RydbergConfig
     spontaneous_decay_rydberg::Bool
 end
 
-
 function simulation(cfg::RydbergConfig)
     samples = samples_generate(
         cfg.trap_params,
@@ -238,4 +234,71 @@ end;
 
 function Ωr_required(Ω, Ωb, Δ)
     return 2.0 * Δ * Ω / Ωb
+end;
+
+
+function simulation_parallel(num_procs, cfg::RydbergConfig)
+    samples = samples_generate(
+        cfg.trap_params,
+        cfg.atom_params,
+        cfg.n_samples;
+        harmonic=false
+        )[1]
+
+    ωr, ωz = trap_frequencies(cfg.atom_params, cfg.trap_params);
+    Δ0, δ0 = cfg.detuning_params;
+
+    Γg, Γgt = cfg.spontaneous_decay_intermediate ? cfg.decay_params[1:2] : [0.0, 0.0]
+    Γr      = cfg.spontaneous_decay_rydberg      ? cfg.decay_params[3]   :  0.0
+    decay_params = [Γg, Γgt, Γr]
+    J, Jdagger = JumpOperators(decay_params)
+
+    ρ0 = cfg.ψ0 ⊗ dagger(cfg.ψ0);
+
+    #Density matrix averaged over realizations of laser noise and atom dynamics.
+    ρ_mean  = [zero(ρ0) for _ ∈ 1:length(cfg.tspan)];
+    ρ_temp  = [zero(ρ0) for _ ∈ 1:length(cfg.tspan)];
+    #Second moment for error estimation of level populations. 
+    ρ2_mean = [zero(ρ0) for _ ∈ 1:length(cfg.tspan)];
+
+    tspan_noise = [0.0:cfg.tspan[end]/1000:cfg.tspan[end];];
+    nodes = (tspan_noise, );
+    red_laser_phase_amplitudes  = cfg.laser_noise ? cfg.red_laser_phase_amplitudes  : zero(cfg.red_laser_phase_amplitudes);
+    blue_laser_phase_amplitudes = cfg.laser_noise ? cfg.blue_laser_phase_amplitudes : zero(cfg.blue_laser_phase_amplitudes);
+
+    using Distributed
+    addprocs(num_procs)  # Adjust the number of workers as needed
+
+    #@everywhere 
+    function parallel_evolution(smpl)
+        Ht = GenerateHamiltonian(
+            smpl,  ωr, ωz,
+            cfg.free_motion,  cfg.atom_motion,
+        
+            tspan_noise, cfg.f,
+            red_laser_phase_amplitudes,
+            blue_laser_phase_amplitudes,
+            nodes,
+        
+            cfg.red_laser_params,
+            cfg.blue_laser_params,
+        
+            Δ0, δ0
+            )
+
+        super_operator(t, rho) = Ht, J, Jdagger
+        _, ρ_temp = timeevolution.master_dynamic(cfg.tspan, ρ0, super_operator);
+        return ρ_temp
+    end
+
+    results = pmap(parallel_evolution, smpl)
+    #println(results)
+    for res in results
+        ρ_mean  .+= res
+        ρ2_mean .+= res .^ 2
+    end;
+
+    rmprocs(workers())
+
+    return ρ_mean ./ cfg.n_samples, ρ2_mean ./ cfg.n_samples
 end;
