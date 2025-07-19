@@ -63,8 +63,6 @@ end;
         [sqrt(Γ0)*σ0p, sqrt(Γ1)*σ1p, sqrt(Γl)*σlp, sqrt(Γr)*σlr], 
         [sqrt(Γ0)*σp0, sqrt(Γ1)*σp1, sqrt(Γl)*σpl, sqrt(Γr)*σrl]
         ]
-    # [[sqrt(Γg)*σgp, sqrt(Γgt)*σgtp, sqrt(Γr)*σgtr], 
-    # [sqrt(Γg)*σpg, sqrt(Γgt)*σpgt, sqrt(Γr)*σrgt]]
 end;
 
 
