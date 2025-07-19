@@ -79,7 +79,7 @@ function trap_frequencies(atom_params, trap_params)
 end;
 
 
-function get_rydberg_probs(ρ, ρ2)
+function get_rydberg_probs(ρ, ρ2, eps=1e-12)
     probs_dict = OrderedCollections.OrderedDict{String, Vector{Float64}}();
 
     names = ["0", "1", "r", "p", "l"];
@@ -87,7 +87,7 @@ function get_rydberg_probs(ρ, ρ2)
     for i in 1:5
         P = real(expect(states[i] ⊗ dagger(states[i]), ρ))
         P2 = real(expect(states[i] ⊗ dagger(states[i]), ρ2))
-        S = @. sqrt(P2 - P^2) / length(ρ)
+        S = @. sqrt(P2 - P^2 .+ eps) / length(ρ)
         probs_dict["P"*names[i]] = P
         probs_dict["S"*names[i]] = S 
     end 
@@ -95,10 +95,10 @@ function get_rydberg_probs(ρ, ρ2)
     return probs_dict
 end
 
-function get_two_qubit_probs(ρ, ρ2)
+function get_two_qubit_probs(ρ, ρ2, eps=1e-12)
     probs_dict = OrderedCollections.OrderedDict{String, Vector{Float64}}();
     names = ["00", "01", "10", "11"];
-    
+
     states = [
         ket_0 ⊗ ket_0, 
         ket_0 ⊗ ket_1, 
@@ -108,7 +108,7 @@ function get_two_qubit_probs(ρ, ρ2)
     for i in 1:4
         P = real(expect(states[i] ⊗ dagger(states[i]), ρ))
         P2 = real(expect(states[i] ⊗ dagger(states[i]), ρ2))
-        S = @. sqrt(P2 - P^2) / length(ρ)
+        S = @. sqrt(P2 - P^2 .+ eps) / length(ρ)
         probs_dict["P"*names[i]] = P
         probs_dict["S"*names[i]] = S 
     end 

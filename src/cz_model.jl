@@ -5,7 +5,7 @@
         sqrt(Γ0)*σ0p ⊗ Id,  sqrt(Γ1)*σ1p ⊗ Id, sqrt(Γl)*σlp ⊗ Id, sqrt(Γr)*σlr ⊗ Id,
         sqrt(Γ0)*Id  ⊗ σ0p, sqrt(Γ1)*Id  ⊗ σ1p, sqrt(Γl)*Id ⊗ σlp, sqrt(Γr)*Id ⊗ σlr
         ]
-    return [operators, dagger.(operators)]
+    return operators
 end;
 
 
@@ -49,9 +49,6 @@ end
         # Hamiltonian params trajectories
         Ωr = t -> exp(1.0im * (ϕ_red(t)  + ϕr(t))) * Ω(X(t), Y(t), Z(t), red_laser_params );
         Ωb = t -> exp(1.0im * (ϕ_blue(t) + ϕb(t))) * Ω(X(t), Y(t), Z(t), blue_laser_params);
-
-        # Ωr = t -> 2π * (1.0 + 0.1 * sin(t))
-        # Ωb = t -> 2π * (1.0 - 0.1 * sin(t))
 
         coefficients_two = [coefficients_two; 
             [
@@ -103,13 +100,12 @@ function simulation_czlp(cfg::CZLPConfig)
     red_laser_phase_amplitudes  = cfg.laser_noise ? cfg.red_laser_phase_amplitudes  : zero(cfg.red_laser_phase_amplitudes);
     blue_laser_phase_amplitudes = cfg.laser_noise ? cfg.blue_laser_phase_amplitudes : zero(cfg.blue_laser_phase_amplitudes);
     ϕb = t -> 0.0;
-    # ϕr = t -> t < 0.2 ? 1.0 : -cfg.ξ;
-    ϕr = t -> 2.0im * sin(t)
+    ϕr = t -> t < τ ? 0.0 : cfg.ξ;
 
     Γ0, Γ1, Γl   = cfg.spontaneous_decay_intermediate ? cfg.decay_params[1:3] : zeros(3)
     Γr           = cfg.spontaneous_decay_rydberg      ? cfg.decay_params[4]   :  0.0
     decay_params = [Γ0, Γ1, Γl, Γr]
-    J, Jdagger   = JumpOperatorsTwo(decay_params)
+    J = JumpOperatorsTwo(decay_params)
 
     ρ0  = cfg.ψ0 ⊗ dagger(cfg.ψ0);
     #Density matrix averaged over realizations of laser noise and atom dynamics.
@@ -130,11 +126,11 @@ function simulation_czlp(cfg::CZLPConfig)
                 Δ0, δ0,
                 cfg.c6)
 
-        super_operator(t, rho) = H, J, Jdagger
-        ρt = timeevolution.master_dynamic(cfg.tspan, ρ0, super_operator)[2];
+        # super_operator(t, rho) = H, J, Jdagger
+        ρt = timeevolution.master_dynamic(cfg.tspan, ρ0, H, J)[2];
 
         ρ  .+= ρt
         ρ2 .+= ρt .^ 2
     end;
-    return ρ, ρ2;
+    return ρ ./ cfg.n_samples, ρ2 ./ cfg.n_samples;
 end

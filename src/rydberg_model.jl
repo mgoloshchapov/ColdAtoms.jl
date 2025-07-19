@@ -76,7 +76,7 @@ end;
 @inline function JumpOperators(decay_params)
     Γ0, Γ1, Γl, Γr = decay_params;
     operators = [sqrt(Γ0)*σ0p, sqrt(Γ1)*σ1p, sqrt(Γl)*σlp, sqrt(Γr)*σlr]
-    return [operators, dagger.(operators)]
+    return operators
 end;
 
 @inline function GenerateHamiltonian(
@@ -114,13 +114,10 @@ end;
 
 
     # Hamiltonian params trajectories
-    # Ωr = t -> exp(1.0im * ϕ_red(t)) * Ω(X(t), Y(t), Z(t), red_laser_params);
-    # Ωb = t -> exp(1.0im * ϕ_blue(t)) * Ω(X(t), Y(t), Z(t), blue_laser_params);
+    Ωr = t -> exp(1.0im * ϕ_red(t)) * Ω(X(t), Y(t), Z(t), red_laser_params);
+    Ωb = t -> exp(1.0im * ϕ_blue(t)) * Ω(X(t), Y(t), Z(t), blue_laser_params);
 
-    Ωr = t -> 2π * 60.0 * (1.0 + 0.5 * sin(t))
-    Ωb = t -> 2π * 60.0 * (1.0 - 0.5 * sin(t))
-
-    Ht = TimeDependentSum(
+    H = TimeDependentSum(
         [
             t -> -Δ(Vx(t), Vz(t), red_laser_params) - Δ0,
             t -> -δ(Vx(t), Vz(t), red_laser_params, blue_laser_params) - δ0,
@@ -132,7 +129,7 @@ end;
         operators
         );
 
-    return Ht
+    return H
 end;
 
 
@@ -156,7 +153,7 @@ function simulation(cfg::RydbergConfig)
     Γ0, Γ1, Γl   = cfg.spontaneous_decay_intermediate ? cfg.decay_params[1:3] : zeros(3)
     Γr           = cfg.spontaneous_decay_rydberg      ? cfg.decay_params[4]   :  0.0
     decay_params = [Γ0, Γ1, Γl, Γr]
-    J, Jdagger   = JumpOperators(decay_params)
+    J = JumpOperators(decay_params)
 
     ρ0 = cfg.ψ0 ⊗ dagger(cfg.ψ0);
     #Density matrix averaged over realizations of laser noise and atom dynamics.
@@ -165,8 +162,9 @@ function simulation(cfg::RydbergConfig)
     #Second moment for error estimation of level populations. 
     ρ2 = [zero(ρ0) for _ ∈ 1:length(cfg.tspan)];
 
+
     function __simulation(sample)
-        Ht = GenerateHamiltonian(
+        H = GenerateHamiltonian(
             sample, 
             ωr, ωz,
             cfg.free_motion,
@@ -185,9 +183,7 @@ function simulation(cfg::RydbergConfig)
             δ0
             )
 
-        super_operator(t, rho) = Ht, J, Jdagger
-        ρt .= timeevolution.master_dynamic(cfg.tspan, ρ0, super_operator)[2];
-
+        ρt .= timeevolution.master_dynamic(cfg.tspan, ρ0, H, J)[2];
         ρ  .+= ρt
         ρ2 .+= ρt .^ 2
     end
