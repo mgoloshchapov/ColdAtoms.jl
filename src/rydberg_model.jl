@@ -7,6 +7,7 @@ const ket_p = nlevelstate(basis, 4);
 const ket_l = nlevelstate(basis, 5);
 
 #Operators
+const Id  = identityoperator(basis);
 const σ0p = ket_0 ⊗ dagger(ket_p);
 const σp0 = ket_p ⊗ dagger(ket_0);
 const σ1p = ket_1 ⊗ dagger(ket_p);
@@ -57,9 +58,13 @@ end;
 ### Change operators
 #Jump operators for master equation 
 @inline function JumpOperators(decay_params)
-    Γg, Γgt, Γr = decay_params;
-    return [[sqrt(Γg)*σgp, sqrt(Γgt)*σgtp, sqrt(Γr)*σgtr], 
-    [sqrt(Γg)*σpg, sqrt(Γgt)*σpgt, sqrt(Γr)*σrgt]]
+    Γ0, Γ1, Γl, Γr = decay_params;
+    return [
+        [sqrt(Γ0)*σ0p, sqrt(Γ1)*σ1p, sqrt(Γl)*σlp, sqrt(Γr)*σlr], 
+        [sqrt(Γ0)*σp0, sqrt(Γ1)*σp1, sqrt(Γl)*σpl, sqrt(Γr)*σrl]
+        ]
+    # [[sqrt(Γg)*σgp, sqrt(Γgt)*σgtp, sqrt(Γr)*σgtr], 
+    # [sqrt(Γg)*σpg, sqrt(Γgt)*σpgt, sqrt(Γr)*σrgt]]
 end;
 
 
@@ -154,18 +159,18 @@ function simulation(cfg::RydbergConfig)
     ωr, ωz = trap_frequencies(cfg.atom_params, cfg.trap_params);
     Δ0, δ0 = cfg.detuning_params;
 
-    Γg, Γgt = cfg.spontaneous_decay_intermediate ? cfg.decay_params[1:2] : [0.0, 0.0]
-    Γr      = cfg.spontaneous_decay_rydberg      ? cfg.decay_params[3]   :  0.0
-    decay_params = [Γg, Γgt, Γr]
-    J, Jdagger = JumpOperators(decay_params)
+    Γ0, Γ1, Γl   = cfg.spontaneous_decay_intermediate ? cfg.decay_params[1:3] : zeros(3)
+    Γr           = cfg.spontaneous_decay_rydberg      ? cfg.decay_params[4]   :  0.0
+    decay_params = [Γ0, Γ1, Γl, Γr]
+    J, Jdagger   = JumpOperators(decay_params)
 
     ρ0 = cfg.ψ0 ⊗ dagger(cfg.ψ0);
 
     #Density matrix averaged over realizations of laser noise and atom dynamics.
-    ρ_mean  = [zero(ρ0) for _ ∈ 1:length(cfg.tspan)];
-    ρ_temp  = [zero(ρ0) for _ ∈ 1:length(cfg.tspan)];
+    ρ  = [zero(ρ0) for _ ∈ 1:length(cfg.tspan)];
+    ρt  = [zero(ρ0) for _ ∈ 1:length(cfg.tspan)];
     #Second moment for error estimation of level populations. 
-    ρ2_mean = [zero(ρ0) for _ ∈ 1:length(cfg.tspan)];
+    ρ2 = [zero(ρ0) for _ ∈ 1:length(cfg.tspan)];
 
     tspan_noise = [0.0:cfg.tspan[end]/1000:cfg.tspan[end];];
     nodes = (tspan_noise, );
@@ -193,13 +198,13 @@ function simulation(cfg::RydbergConfig)
             )
 
         super_operator(t, rho) = Ht, J, Jdagger
-        _, ρ_temp = timeevolution.master_dynamic(cfg.tspan, ρ0, super_operator);
+        _, ρt = timeevolution.master_dynamic(cfg.tspan, ρ0, super_operator);
 
-        ρ_mean  .+= ρ_temp
-        ρ2_mean .+= ρ_temp .^ 2
+        ρ  .+= ρt
+        ρ2 .+= ρt .^ 2
     end;
 
-    return ρ_mean ./ cfg.n_samples, ρ2_mean ./ cfg.n_samples
+    return ρ ./ cfg.n_samples, ρ2 ./ cfg.n_samples
 end;
 
 function Ω_twophoton(Ωr, Ωb, Δ)
