@@ -14,10 +14,12 @@ using HypergeometricFunctions
 using OrderedCollections
 using Plots
 using ProgressBars
-#using OrdinaryDiffEq
+using Distributed
+
+
 
 export 
-    w0_to_z0, trap_frequencies, E, I, get_rydberg_probs,
+    w0_to_z0, trap_frequencies, E, I, get_rydberg_probs, plot_rydberg_probs, RydbergConfig,
     release_recapture,
     samples_generate, R, V, get_trap_params, H, samples_visualise,
     Sϕ, ϕ_amplitudes, ϕ,
@@ -25,9 +27,10 @@ export
     ket_0, ket_1, ket_r, ket_p, ket_l,
     simple_flattopHG_field,simple_flattopLG_field,
     HG_coeff, simulation_blue_intens,
-    g1, p1, r1, gt1, zero1,
-    Id, two_atom_simulation,
-    direct_CZ_simulation
+    # g1, p1, r1, gt1, zero1,
+    # Id, two_atom_simulation,
+    # direct_CZ_simulation
+    simulation_czlp, CZLPConfig
         
 include("utilities.jl")
 include("basic_experiments.jl")
@@ -36,6 +39,7 @@ include("atom_sampler.jl")
 include("rydberg_model.jl")
 include("arbitrary_beams.jl")
 include("rydberg_model_arb_bms.jl")
-include("two_atom_model.jl")
+# include("two_atom_model.jl")
+include("cz_model.jl")
 
 end

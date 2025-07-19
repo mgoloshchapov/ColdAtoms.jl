@@ -23,7 +23,6 @@ function w0_to_z0(w0, λ, M2=1.0)
 end;
 
 
-
 #Amplitude of gaussian beam with |E0|=1
 function A(x, y, z, w0, z0; n=1, θ=0.0)
     xt, yt, zt = sqrt(x^2 + y^2), 0.0, z 
@@ -80,15 +79,36 @@ function trap_frequencies(atom_params, trap_params)
 end;
 
 
-function get_rydberg_probs(ρ_mean, ρ2_mean)
+function get_rydberg_probs(ρ, ρ2)
     probs_dict = OrderedCollections.OrderedDict{String, Vector{Float64}}();
 
     names = ["0", "1", "r", "p", "l"];
     states = [ket_0, ket_1, ket_r, ket_p, ket_l];
     for i in 1:5
-        P = real(expect(states[i] ⊗ dagger(states[i]), ρ_mean))
-        P2 = real(expect(states[i] ⊗ dagger(states[i]), ρ2_mean))
-        S = @. sqrt(P2 - P^2) / length(ρ_mean)
+        P = real(expect(states[i] ⊗ dagger(states[i]), ρ))
+        P2 = real(expect(states[i] ⊗ dagger(states[i]), ρ2))
+        S = @. sqrt(P2 - P^2) / length(ρ)
+        probs_dict["P"*names[i]] = P
+        probs_dict["S"*names[i]] = S 
+    end 
+
+    return probs_dict
+end
+
+function get_two_qubit_probs(ρ, ρ2)
+    probs_dict = OrderedCollections.OrderedDict{String, Vector{Float64}}();
+    names = ["00", "01", "10", "11"];
+    
+    states = [
+        ket_0 ⊗ ket_0, 
+        ket_0 ⊗ ket_1, 
+        ket_1 ⊗ ket_0, 
+        ket_1 ⊗ ket_1
+        ];
+    for i in 1:4
+        P = real(expect(states[i] ⊗ dagger(states[i]), ρ))
+        P2 = real(expect(states[i] ⊗ dagger(states[i]), ρ2))
+        S = @. sqrt(P2 - P^2) / length(ρ)
         probs_dict["P"*names[i]] = P
         probs_dict["S"*names[i]] = S 
     end 
@@ -118,38 +138,82 @@ function plot_rydberg_probs(tspan, probs_dict)
     display(plt)
 end
 
-# #Function for visualisation of samples
-# function samples_visualise(samples)
-#     x, y, z, vx, vy, vz = invert(samples);
-#     figure(figsize=(6,6))
-#     subplot(221)
-#     hist2D(x, z, bins=50, range=[[-1.0, 1.0], [-2.5, 2.5]],cmap="plasma", rasterized=true);
-#     xlabel("x, μm")
-#     ylabel("z, μm")
-#     title("Coordinate distribution");
+function plot_two_qubit_probs(tspan, probs_dict)
+    names = ["00", "01", "10", "11"];
+    colors = Plots.cgrad(:bam, 4, categorical = true)
 
-#     subplot(222)
-#     hist(x, bins=[-1.5:0.02:1.5;], density=true, alpha=0.5, label="x")
-#     hist(z, bins=[-2.0:0.1:2.0;], density=true, alpha=0.5, label="z")
-#     xlabel("μm")
-#     ylabel("pdf")
-#     title("Coordinate distribution");
-#     legend()
+    plt = Plots.plot()
+    for i in 1:4
+        P = probs_dict["P"*names[i]]
+        S = probs_dict["S"*names[i]]
+        plot!(
+            tspan, [P P], fillrange=[P+S P-S], 
+            ylim=(0.0, 1.0), xlim=(minimum(tspan), maximum(tspan)), 
+            fillalpha=0.25, c=colors[i], 
+            label=[nothing "P" * names[i]], linewidth=3
+            )
+    end
+    xlabel!("Time, μs")
+    ylabel!("Probability")
+    title!("Two-qubit probabilities")
 
-#     subplot(223)
-#     hist2D(vx, vz, bins=50, range=[[-0.3, 0.3], [-0.3, 0.3]],cmap="plasma", rasterized=true);
-#     xlabel("\$ v_x \$, \$ \\mu m/ \\mu s \$")
-#     ylabel("\$ v_z \$, \$ \\mu m/ \\mu s \$")
-#     title("Velocity distribution");
+    display(plt)
+end
 
 
-#     subplot(224)
-#     hist(vx, bins=[-0.3:0.01:0.3;], density=true, alpha=0.5, label="\$ v_x \$")
-#     hist(vz, bins=[-0.3:0.01:0.3;], density=true, alpha=0.5, label="\$ v_z \$")
-#     xlabel("\$ \\mu m/ \\mu s \$")
-#     ylabel("pdf")
-#     title("Velocity distribution");
-#     legend()
+mutable struct RydbergConfig
+    tspan::Vector{Float64}
+    ψ0::Ket{NLevelBasis{Int64}, Vector{ComplexF64}}
 
-#     tight_layout()
-# end;
+    atom_params::Vector{Float64}
+    trap_params::Vector{Float64}
+    n_samples::Int64
+
+    f::Vector{Float64}
+    red_laser_phase_amplitudes::Vector{Float64}
+    blue_laser_phase_amplitudes::Vector{Float64}
+    
+    red_laser_params::Vector{Float64}
+    blue_laser_params::Vector{Float64}
+    
+    detuning_params::Vector{Float64}
+    decay_params::Vector{Float64}
+
+    atom_motion::Bool
+    free_motion::Bool
+    laser_noise::Bool
+    spontaneous_decay_intermediate::Bool
+    spontaneous_decay_rydberg::Bool
+end
+
+
+mutable struct CZLPConfig
+    tspan::Vector{Float64}
+    ψ0
+
+    atom_params::Vector{Float64}
+    trap_params::Vector{Float64}
+    n_samples::Int64
+
+    f::Vector{Float64}
+    red_laser_phase_amplitudes::Vector{Float64}
+    blue_laser_phase_amplitudes::Vector{Float64}
+    
+    red_laser_params::Vector{Float64}
+    blue_laser_params::Vector{Float64}
+    
+    detuning_params::Vector{Float64}
+    decay_params::Vector{Float64}
+
+    atom_motion::Bool
+    free_motion::Bool
+    laser_noise::Bool
+    spontaneous_decay_intermediate::Bool
+    spontaneous_decay_rydberg::Bool
+
+    atom_centers::Vector{Vector{Float64}}
+    c6::Float64
+    ΔtoΩ::Float64
+    Ωτ::Float64
+    ξ::Float64
+end
