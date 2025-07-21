@@ -194,7 +194,8 @@ function direct_CZ_simulation(tspan1, tspan2, ρ_1,
     samples_first, samples_second, 
     red_laser_params_first,    blue_laser_params_first,
     red_laser_params_second,    blue_laser_params_second,
-    detuning_params_first,     detuning_params_second,     V_rr, phase;
+    detuning_params_first,     detuning_params_second, 
+    decay_params,   V_rr, phase;
     atom_motion=true,     free_motion=true,  spontaneous_decay=true,   parallel=false
     )
     

@@ -244,68 +244,82 @@ function Ωr_required(Ω, Ωb, Δ)
     return 2.0 * Δ * Ω / Ωb
 end;
 
+using MPI
+"""
+    struct send_rho
+        r::Vector{Operator{NLevelBasis{Int64}, NLevelBasis{Int64}, Matrix{ComplexF64}}}
+    end
+    #function sum_for_MPI(A::Vector{Operator{NLevelBasis{Int64}, NLevelBasis{Int64}, Matrix{ComplexF64}}},     B::Vector{Operator{NLevelBasis{Int64}, NLevelBasis{Int64}, Matrix{ComplexF64}}})
+    function  sum_for_MPI(A::send_rho, B::send_rho)
+        ro = A.r .+ B.r
+        return send_rho(ro)
+    end
+    MPI.@RegisterOp(sum_for_MPI, send_rho)#T::Vector{Operator{NLevelBasis{Int64}, NLevelBasis{Int64}, Matrix{ComplexF64}}})
+"""
+function simulation_mpi(cfg::RydbergConfig)
+    samples = samples_generate(cfg.trap_params,
+        cfg.atom_params,cfg.n_samples; harmonic=false)[1]
 
-function simulation_parallel(num_procs, cfg::RydbergConfig)
-    samples = samples_generate(
-        cfg.trap_params,
-        cfg.atom_params,
-        cfg.n_samples;
-        harmonic=false
-        )[1]
+    MPI.Init()
+    rank = MPI.Comm_rank(MPI.COMM_WORLD)
+    size = MPI.Comm_size(MPI.COMM_WORLD)
 
+    """if rank == 0
+        samples = samples_generate(cfg.trap_params,cfg.atom_params, cfg.n_samples÷size ;harmonic=false)[1]
+    else
+        samples = nothing
+    end"""
+    samples = samples_generate(cfg.trap_params,cfg.atom_params, cfg.n_samples÷size ;harmonic=false)[1]
+    println(length(samples))
+    
+    #Bcasted_samples = MPI.Bcast(samples, MPI.COMM_WORLD, root=0)
+    MPI.bcast(samples, MPI.COMM_WORLD, root = 0)
+    
     ωr, ωz = trap_frequencies(cfg.atom_params, cfg.trap_params);
     Δ0, δ0 = cfg.detuning_params;
-
-    Γg, Γgt = cfg.spontaneous_decay_intermediate ? cfg.decay_params[1:2] : [0.0, 0.0]
-    Γr      = cfg.spontaneous_decay_rydberg      ? cfg.decay_params[3]   :  0.0
-    decay_params = [Γg, Γgt, Γr]
-    J, Jdagger = JumpOperators(decay_params)
-
+    Γ0, Γ1, Γl   = cfg.spontaneous_decay_intermediate ? cfg.decay_params[1:3] : zeros(3)
+    Γr           = cfg.spontaneous_decay_rydberg      ? cfg.decay_params[4]   :  0.0
+    decay_params = [Γ0, Γ1, Γl, Γr]
+    J, Jdagger   = JumpOperators(decay_params)
     ρ0 = cfg.ψ0 ⊗ dagger(cfg.ψ0);
+    
+    ρ_res  = [zero(ρ0) for _ ∈ 1:length(cfg.tspan)];
+    ρt  = [zero(ρ0) for _ ∈ 1:length(cfg.tspan)];
+    #ρ2 = [zero(ρ0) for _ ∈ 1:length(cfg.tspan)];
 
-    #Density matrix averaged over realizations of laser noise and atom dynamics.
-    ρ_mean  = [zero(ρ0) for _ ∈ 1:length(cfg.tspan)];
-    ρ_temp  = [zero(ρ0) for _ ∈ 1:length(cfg.tspan)];
-    #Second moment for error estimation of level populations. 
-    ρ2_mean = [zero(ρ0) for _ ∈ 1:length(cfg.tspan)];
+    rho  = [zero(ρ0.data) for _ ∈ 1:length(cfg.tspan)]; #real(expect(r1 ⊗ dagger(r1), ρ_res)) #[zero(real(expect(r1 ⊗ dagger(r1) ⊗ Id, ρ0))) for _ ∈ 1:length(cfg.tspan)];
+    rec_rho  = [zero(ρ0.data) for _ ∈ 1:length(cfg.tspan)]; #real(expect(r1 ⊗ dagger(r1) , ρ_res)) #rec_rho  = [zero(real(expect(r1 ⊗ dagger(r1) ⊗ Id, ρ0))) for _ ∈ 1:length(cfg.tspan)];
+    #rho2 = [zero(ρ0) for _ ∈ 1:length(cfg.tspan)];
 
     tspan_noise = [0.0:cfg.tspan[end]/1000:cfg.tspan[end];];
     nodes = (tspan_noise, );
     red_laser_phase_amplitudes  = cfg.laser_noise ? cfg.red_laser_phase_amplitudes  : zero(cfg.red_laser_phase_amplitudes);
     blue_laser_phase_amplitudes = cfg.laser_noise ? cfg.blue_laser_phase_amplitudes : zero(cfg.blue_laser_phase_amplitudes);
-
-    using Distributed
-    addprocs(num_procs)  # Adjust the number of workers as needed
-
-    @everywhere function parallel_evolution(smpl)
+    
+    N = length(samples)
+    @time for sample in samples #ProgressBars.ProgressBar(samples) #Bcasted_samples)
         Ht = GenerateHamiltonian(
-            smpl,  ωr, ωz,
-            cfg.free_motion,  cfg.atom_motion,
-        
-            tspan_noise, cfg.f,
-            red_laser_phase_amplitudes,
-            blue_laser_phase_amplitudes,
-            nodes,
-        
-            cfg.red_laser_params,
-            cfg.blue_laser_params,
-        
-            Δ0, δ0
-            )
+            sample, ωr, ωz, cfg.free_motion, cfg.atom_motion,
+            tspan_noise, cfg.f,red_laser_phase_amplitudes,
+            blue_laser_phase_amplitudes,nodes,
+            cfg.red_laser_params,cfg.blue_laser_params,Δ0, δ0)
 
         super_operator(t, rho) = Ht, J, Jdagger
-        _, ρ_temp = timeevolution.master_dynamic(cfg.tspan, ρ0, super_operator);
-        return ρ_temp
-    end
+        _, ρt = timeevolution.master_dynamic(cfg.tspan, ρ0, super_operator);
 
-    results = pmap(parallel_evolution, smpl)
-    #println(results)
-    for res in results
-        ρ_mean  .+= res
-        ρ2_mean .+= res .^ 2
+        ρ_res  .+= ρt
+         
+        #ρ2 .+= ρt .^ 2 
+    end;
+    rho = [ρ_ress.data for ρ_ress in ρ_res]#ρ_res.data #real(expect(r1 ⊗ dagger(r1), ρ_res)); 
+
+    rec_rho = MPI.Reduce(rho, MPI.SUM, MPI.COMM_WORLD; root=0)
+
+    #MPI.Finalize()
+    if rank == 0
+        return rho ./ cfg.n_samples #, rho2 ./ cfg.n_samples
+    else
+        return "_", "_"
     end;
 
-    rmprocs(workers())
-
-    return ρ_mean ./ cfg.n_samples, ρ2_mean ./ cfg.n_samples
 end;

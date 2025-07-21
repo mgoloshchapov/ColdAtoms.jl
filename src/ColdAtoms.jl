@@ -14,7 +14,8 @@ using Distributed
 using OrderedCollections
 using Plots
 using ProgressBars
-#using OrdinaryDiffEq
+using MPI
+using OrdinaryDiffEq
 
 export 
     w0_to_z0, trap_frequencies, E, I, get_rydberg_probs,
@@ -28,7 +29,7 @@ export
     g1, p1, r1, gt1, zero1,
     Id, two_atom_simulation,
     direct_CZ_simulation,
-    simulation_parallel
+    simulation_mpi
         
 include("utilities.jl")
 include("basic_experiments.jl")
