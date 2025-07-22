@@ -145,7 +145,7 @@ nothing #hide
 Finally, we are ready to run our simulation. As a result, we receive density matrix and its squared values for error estimation. 
 
 ```@example rydberg
-ψ0 = g;
+ψ0 = g1;
 
 ρ_mean, ρ2_mean = 
     simulation(
@@ -179,9 +179,9 @@ Now we can average density matrix over projectors on system states and plot Rabi
 
 ```@example rydberg 
 # Take average of state populations over density matrix
-Pg = real(expect(g ⊗ dagger(g), ρ_mean)); 
-Pp = real(expect(p ⊗ dagger(p), ρ_mean)); 
-Pr = real(expect(r ⊗ dagger(r), ρ_mean));
+Pg = real(expect(g1 ⊗ dagger(g1), ρ_mean)); 
+Pp = real(expect(p1 ⊗ dagger(p1), ρ_mean)); 
+Pr = real(expect(r1 ⊗ dagger(r1), ρ_mean));
 
 # Plot Rabi oscillations
 plot(

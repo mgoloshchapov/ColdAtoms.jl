@@ -10,13 +10,12 @@ using Interpolations
 using Polynomials
 using SpecialPolynomials
 using HypergeometricFunctions
-
+using Distributed
 using OrderedCollections
 using Plots
 using ProgressBars
-using Distributed
-
-
+using MPI
+using OrdinaryDiffEq
 
 export 
     w0_to_z0, trap_frequencies, E, I,
@@ -27,11 +26,12 @@ export
     ket_0, ket_1, ket_r, ket_p, ket_l,
     simple_flattopHG_field,simple_flattopLG_field,
     HG_coeff, simulation_blue_intens,
-    # g1, p1, r1, gt1, zero1,
-    # Id, two_atom_simulation,
-    # direct_CZ_simulation
+#     g1, p1, r1, gt1, zero1,
+#     Id, two_atom_simulation,
+#     direct_CZ_simulation,
     simulation, RydbergConfig, get_rydberg_probs, plot_rydberg_probs,
     simulation_czlp, CZLPConfig, get_two_qubit_probs, plot_two_qubit_probs,
+    simulation_mpi,
 
     get_gate, project_on_qubit, get_parity_fidelity
         
