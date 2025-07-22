@@ -32,7 +32,7 @@ const operators = [np, nr, σ1p, σp1, σpr, σrp];
     atom_motion::Bool,
     free_motion::Bool
     )
-    x, y, z, vx, vy, vz = atom_motion ? sample : zeros(6);
+    x, y, z, vx, vy, vz = atom_motion ? sample : zeros(Float64, 6);
     X  = t -> R(t, x, vx, ωr; free=free_motion);
     Y  = t -> R(t, y, vy, ωr; free=free_motion);
     Z  = t -> R(t, z, vz, ωz; free=free_motion);
@@ -118,7 +118,7 @@ end;
 
     red_laser_params,
     blue_laser_params,
-
+    
     Δ0, 
     δ0
     )
@@ -158,7 +158,7 @@ end;
 end;
 
 
-function simulation(cfg::RydbergConfig)
+function simulation(cfg::RydbergConfig; ode_kwargs...)
 
     samples = samples_generate(
         cfg.trap_params,
@@ -166,6 +166,7 @@ function simulation(cfg::RydbergConfig)
         cfg.n_samples;
         harmonic=false
         )[1]
+    samples[1] .*= 1e-3
 
     ωr, ωz = trap_frequencies(cfg.atom_params, cfg.trap_params);
     Δ0, δ0 = cfg.detuning_params;
@@ -175,8 +176,8 @@ function simulation(cfg::RydbergConfig)
     red_laser_phase_amplitudes  = cfg.laser_noise ? cfg.red_laser_phase_amplitudes  : zero(cfg.red_laser_phase_amplitudes);
     blue_laser_phase_amplitudes = cfg.laser_noise ? cfg.blue_laser_phase_amplitudes : zero(cfg.blue_laser_phase_amplitudes);
 
-    Γ0, Γ1, Γl   = cfg.spontaneous_decay_intermediate ? cfg.decay_params[1:3] : zeros(3)
-    Γr           = cfg.spontaneous_decay_rydberg      ? cfg.decay_params[4]   :  0.0
+    Γ0, Γ1, Γl   = cfg.spontaneous_decay_intermediate ? cfg.decay_params[1:3] : 1e-9 * ones(3)
+    Γr           = cfg.spontaneous_decay_rydberg      ? cfg.decay_params[4]   :  1e-9
     decay_params = [Γ0, Γ1, Γl, Γr]
     J = JumpOperators(decay_params)
 
@@ -208,7 +209,7 @@ function simulation(cfg::RydbergConfig)
             δ0
             )
 
-        ρt .= timeevolution.master_dynamic(cfg.tspan, ρ0, H, J)[2];
+        ρt .= timeevolution.master_dynamic(cfg.tspan, ρ0, H, J; ode_kwargs...)[2];
         ρ  .+= ρt
         ρ2 .+= ρt .^ 2
     end
@@ -229,7 +230,7 @@ function T_twophoton(Ωr, Ωb, Δ)
 end;
 
 function δ_twophoton(Ωr, Ωb, Δ)
-    return (Ωb^2 - Ωr^2)/(4.0 * Δ)
+    return (Ωr^2 - Ωb^2)/(4.0 * Δ)
 end;
 
 function Ωr_required(Ω, Ωb, Δ)

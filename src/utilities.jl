@@ -34,7 +34,7 @@ end;
 #Intensity of gaussian beam with |E0|=1
 function I(x, y, z, w0, z0; n=1, θ=0.0)
     xt, yt, zt = sqrt(x^2 + y^2), 0.0, z 
-    xt, zt = xt*cos(θ)-zt*sin(θ), xt*sin(θ) + zt*cos(θ)
+    xt, zt = xt*cos(θ) - zt*sin(θ), xt*sin(θ) + zt*cos(θ)
     return ((w0 ./ w(zt, w0, z0)) .* exp.(-((xt .^2 .+ yt .^2) ./ (w(zt, w0, z0) .^2)).^n)) .^2
 end;
 
@@ -216,4 +216,5 @@ mutable struct CZLPConfig
     ΔtoΩ::Float64
     Ωτ::Float64
     ξ::Float64
+    ϕ1::Float64
 end

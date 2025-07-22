@@ -52,8 +52,8 @@ end
 
         coefficients_two = [coefficients_two; 
             [
-                t -> -Δ(Vx(t), Vz(t), red_laser_params) - Δ0,
-                t -> -δ(Vx(t), Vz(t), red_laser_params, blue_laser_params) - δ0,
+                t -> Δ(Vx(t), Vz(t), red_laser_params) - Δ0,
+                t -> δ(Vx(t), Vz(t), red_laser_params, blue_laser_params) - δ0,
                 t -> Ωr(t)       / 2.0,
                 t -> conj(Ωr(t)) / 2.0,
                 t -> Ωb(t)       / 2.0,
@@ -69,7 +69,7 @@ end
 end;
    
 
-function simulation_czlp(cfg::CZLPConfig)
+function simulation_czlp(cfg::CZLPConfig; ode_kwargs...)
     # Generate samples of atoms and shift their centers
     shift1, shift2 = [[cfg.atom_centers[1];zeros(3)]], [[cfg.atom_centers[2];zeros(3)]]
     samples1 = samples_generate(
@@ -127,10 +127,15 @@ function simulation_czlp(cfg::CZLPConfig)
                 cfg.c6)
 
         # super_operator(t, rho) = H, J, Jdagger
-        ρt = timeevolution.master_dynamic(cfg.tspan, ρ0, H, J)[2];
+        ρt = timeevolution.master_dynamic(cfg.tspan, ρ0, H, J; ode_kwargs...)[2];
 
         ρ  .+= ρt
         ρ2 .+= ρt .^ 2
     end;
+
+    # global_RZ = ColdAtoms.RZ(cfg.ϕ1) ⊗ ColdAtoms.RZ(cfg.ϕ1);
+    # ρ[end] .= global_RZ * ρ[end] * dagger(global_RZ);
+    # ρ2[end] .= global_RZ * ρ2[end] * dagger(global_RZ);
+
     return ρ ./ cfg.n_samples, ρ2 ./ cfg.n_samples;
 end

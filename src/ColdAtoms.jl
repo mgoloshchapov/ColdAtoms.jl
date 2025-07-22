@@ -26,13 +26,14 @@ export
     ket_0, ket_1, ket_r, ket_p, ket_l,
     simple_flattopHG_field,simple_flattopLG_field,
     HG_coeff, simulation_blue_intens,
-    g1, p1, r1, gt1, zero1,
-    Id, two_atom_simulation,
-    direct_CZ_simulation,
+#     g1, p1, r1, gt1, zero1,
+#     Id, two_atom_simulation,
+#     direct_CZ_simulation,
     simulation, RydbergConfig, get_rydberg_probs, plot_rydberg_probs,
     simulation_czlp, CZLPConfig, get_two_qubit_probs, plot_two_qubit_probs,
-    simulation_mpi
+    simulation_mpi,
 
+    get_gate, project_on_qubit, get_parity_fidelity
         
 include("utilities.jl")
 include("basic_experiments.jl")
@@ -43,5 +44,7 @@ include("arbitrary_beams.jl")
 include("rydberg_model_arb_bms.jl")
 # include("two_atom_model.jl")
 include("cz_model.jl")
+include("fidelity.jl")
+include("gates.jl")
 
 end
