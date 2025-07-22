@@ -8,26 +8,26 @@ basis_fidelity_states = [
     ]
 
 
-function get_rydberg_fidelity_configs(cfg, n_samples=1)
+function get_rydberg_fidelity_configs(cfg, n_samples=20)
     configs = Dict()
 
     # Config to measure error from intermediate state decay
     cfg_t = deepcopy(cfg)
-    cfg_t.atom_params[2] = cfg_t.trap_params[1] * 0.001
+    cfg_t.atom_params[2] = 1.0
     cfg_t.spontaneous_decay_intermediate = true
-    cfg_t.spontaneous_decay_rydberg = false
+    cfg_t.spontaneous_decay_rydberg      = false
     cfg_t.laser_noise = false
     cfg_t.free_motion = true
     cfg_t.n_samples = 1
     configs["intermdeiate_state_decay"] = cfg_t
 
     # Config to measure error from rydberg state decay
-    cfg_rydberg_state_decay = deepcopy(cfg)
-    cfg_rydberg_state_decay.atom_params[2] = cfg_t.trap_params[1] * 0.001
-    cfg_rydberg_state_decay.spontaneous_decay_intermediate = false
-    cfg_rydberg_state_decay.spontaneous_decay_rydberg = true
-    cfg_rydberg_state_decay.laser_noise = false
-    cfg_rydberg_state_decay.free_motion = true
+    cfg_t = deepcopy(cfg)
+    cfg_t.atom_params[2] = 1.0
+    cfg_t.spontaneous_decay_intermediate = false
+    cfg_t.spontaneous_decay_rydberg      = true
+    cfg_t.laser_noise = false
+    cfg_t.free_motion = true
     cfg_t.n_samples = 1
     configs["rydberg_state_decay"] = cfg_t
 
@@ -65,14 +65,14 @@ end
 
 
 function get_rydberg_infidelity(
-    cfg::RydbergConfig, 
+    cfg::RydbergConfig;
     U=dense(identityoperator(ColdAtoms.basis)), 
     states=basis_fidelity_states, 
-    n_samples=1; 
+    n_samples=1,
     ode_kwargs...)
 
-    names = ["intermdeiate_state_decay", "rydberg_state_decay", "laser_noise", "atom_motion", "total"]
     configs = get_rydberg_fidelity_configs(cfg)
+    names = collect(keys(configs))
     infidelities = Dict()
 
     for name in ProgressBar(names)
@@ -84,9 +84,9 @@ function get_rydberg_infidelity(
             cfg_t.ψ0 = state
             ρ_real = simulation(cfg_t)[1][end]
             infidelity_avg += 1.0 - real(dagger(ψ_ideal) * ρ_real * ψ_ideal)
-        
-        infidelities[name] = infidelity_avg / length(states)
         end
+        infidelities[name] = infidelity_avg / length(states)
+
         println()
         println("Infidelity from $(name): $(round(100.0*infidelities[name]; digits=4)) %")
     end

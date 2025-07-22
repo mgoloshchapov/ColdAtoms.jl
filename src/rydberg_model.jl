@@ -100,8 +100,8 @@ end;
 #Jump operators for master equation 
 @inline function JumpOperators(decay_params)
     Γ0, Γ1, Γl, Γr = decay_params;
-    operators = [sqrt(Γ0)*σ0p, sqrt(Γ1)*σ1p, sqrt(Γl)*σlp, sqrt(Γr)*σlr]
-    return operators
+    decay_operators = [sqrt(Γ0)*σ0p, sqrt(Γ1)*σ1p, sqrt(Γl)*σlp, sqrt(Γr)*σlr]
+    return decay_operators
 end;
 
 @inline function GenerateHamiltonian(
@@ -109,6 +109,7 @@ end;
     ωr, ωz,
     free_motion,
     atom_motion,
+    laser_noise,
 
     tspan_noise,
     f,
@@ -129,13 +130,20 @@ end;
         atom_motion, 
         free_motion);
 
-    # Generate phase noise traces for red and blue lasers
-    ϕ_red_res  = ϕ(tspan_noise, f, red_laser_phase_amplitudes);
-    ϕ_blue_res = ϕ(tspan_noise, f, blue_laser_phase_amplitudes);
+    
 
     # Interpolate phase noise traces to pass to hamiltonian
-    ϕ_red  = interpolate(nodes, ϕ_red_res, Gridded(Linear()));
-    ϕ_blue = interpolate(nodes, ϕ_blue_res, Gridded(Linear()));
+    if laser_noise
+        # Generate phase noise traces for red and blue lasers
+        ϕ_red_res  = ϕ(tspan_noise, f, red_laser_phase_amplitudes);
+        ϕ_blue_res = ϕ(tspan_noise, f, blue_laser_phase_amplitudes);
+
+        ϕ_red  = interpolate(nodes, ϕ_red_res, Gridded(Linear()));
+        ϕ_blue = interpolate(nodes, ϕ_blue_res, Gridded(Linear()));
+    else
+        ϕ_red  = t -> 0.0;
+        ϕ_blue = t -> 0.0;
+    end
 
 
     # Hamiltonian params trajectories
@@ -166,18 +174,18 @@ function simulation(cfg::RydbergConfig; ode_kwargs...)
         cfg.n_samples;
         harmonic=false
         )[1]
-    samples[1] .*= 1e-3
+    # samples[1] .*= 1e-9
 
     ωr, ωz = trap_frequencies(cfg.atom_params, cfg.trap_params);
     Δ0, δ0 = cfg.detuning_params;
 
     tspan_noise = [0.0:cfg.tspan[end]/1000:cfg.tspan[end];];
     nodes = (tspan_noise, );
-    red_laser_phase_amplitudes  = cfg.laser_noise ? cfg.red_laser_phase_amplitudes  : zero(cfg.red_laser_phase_amplitudes);
-    blue_laser_phase_amplitudes = cfg.laser_noise ? cfg.blue_laser_phase_amplitudes : zero(cfg.blue_laser_phase_amplitudes);
+    red_laser_phase_amplitudes  = cfg.red_laser_phase_amplitudes;
+    blue_laser_phase_amplitudes = cfg.blue_laser_phase_amplitudes;
 
-    Γ0, Γ1, Γl   = cfg.spontaneous_decay_intermediate ? cfg.decay_params[1:3] : 1e-9 * ones(3)
-    Γr           = cfg.spontaneous_decay_rydberg      ? cfg.decay_params[4]   :  1e-9
+    Γ0, Γ1, Γl   = cfg.spontaneous_decay_intermediate ? cfg.decay_params[1:3] : zeros(3)
+    Γr           = cfg.spontaneous_decay_rydberg      ? cfg.decay_params[4]   :  0.0
     decay_params = [Γ0, Γ1, Γl, Γr]
     J = JumpOperators(decay_params)
 
@@ -195,6 +203,7 @@ function simulation(cfg::RydbergConfig; ode_kwargs...)
             ωr, ωz,
             cfg.free_motion,
             cfg.atom_motion,
+            cfg.laser_noise,
         
             tspan_noise,
             cfg.f,
@@ -237,7 +246,8 @@ function Ωr_required(Ω, Ωb, Δ)
     return 2.0 * Δ * Ω / Ωb
 end;
 
-using MPI
+
+
 """
     struct send_rho
         r::Vector{Operator{NLevelBasis{Int64}, NLevelBasis{Int64}, Matrix{ComplexF64}}}
