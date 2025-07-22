@@ -166,58 +166,68 @@ end;
 end;
 
 
-function simulation(cfg::RydbergConfig; ode_kwargs...)
+function simulation(
+    cfg::RydbergConfig; 
+    temperature_calibrate=false, 
+    ode_kwargs...
+    )
+
+    if temperature_calibrate
+        cfg_t = calibrate_two_photon(cfg)
+    else
+        cfg_t = deepcopy(cfg)
+    end
 
     samples = samples_generate(
-        cfg.trap_params,
-        cfg.atom_params,
-        cfg.n_samples;
+        cfg_t.trap_params,
+        cfg_t.atom_params,
+        cfg_t.n_samples;
         harmonic=true
         )[1]
 
-    ωr, ωz = trap_frequencies(cfg.atom_params, cfg.trap_params);
-    Δ0, δ0 = cfg.detuning_params;
+    ωr, ωz = trap_frequencies(cfg_t.atom_params, cfg_t.trap_params);
+    Δ0, δ0 = cfg_t.detuning_params;
 
-    tspan_noise = [0.0:cfg.tspan[end]/1000:cfg.tspan[end];];
+    tspan_noise = [0.0:cfg_t.tspan[end]/1000:cfg_t.tspan[end];];
     nodes = (tspan_noise, );
-    red_laser_phase_amplitudes  = cfg.red_laser_phase_amplitudes;
-    blue_laser_phase_amplitudes = cfg.blue_laser_phase_amplitudes;
+    red_laser_phase_amplitudes  = cfg_t.red_laser_phase_amplitudes;
+    blue_laser_phase_amplitudes = cfg_t.blue_laser_phase_amplitudes;
 
-    Γ0, Γ1, Γl   = cfg.spontaneous_decay_intermediate ? cfg.decay_params[1:3] : zeros(3)
-    Γr           = cfg.spontaneous_decay_rydberg      ? cfg.decay_params[4]   :  0.0
+    Γ0, Γ1, Γl   = cfg_t.spontaneous_decay_intermediate ? cfg_t.decay_params[1:3] : zeros(3)
+    Γr           = cfg_t.spontaneous_decay_rydberg      ? cfg_t.decay_params[4]   :  0.0
     decay_params = [Γ0, Γ1, Γl, Γr]
     J = JumpOperators(decay_params)
 
-    ρ0 = cfg.ψ0 ⊗ dagger(cfg.ψ0);
+    ρ0 = cfg_t.ψ0 ⊗ dagger(cfg_t.ψ0);
     #Density matrix averaged over realizations of laser noise and atom dynamics.
-    ρ  = [zero(ρ0) for _ ∈ 1:length(cfg.tspan)];
-    ρt  = [zero(ρ0) for _ ∈ 1:length(cfg.tspan)];
+    ρ  = [zero(ρ0) for _ ∈ 1:length(cfg_t.tspan)];
+    ρt  = [zero(ρ0) for _ ∈ 1:length(cfg_t.tspan)];
     #Second moment for error estimation of level populations. 
-    ρ2 = [zero(ρ0) for _ ∈ 1:length(cfg.tspan)];
+    ρ2 = [zero(ρ0) for _ ∈ 1:length(cfg_t.tspan)];
 
 
     function __simulation(sample)
         H = GenerateHamiltonian(
             sample, 
             ωr, ωz,
-            cfg.free_motion,
-            cfg.atom_motion,
-            cfg.laser_noise,
+            cfg_t.free_motion,
+            cfg_t.atom_motion,
+            cfg_t.laser_noise,
         
             tspan_noise,
-            cfg.f,
+            cfg_t.f,
             red_laser_phase_amplitudes,
             blue_laser_phase_amplitudes,
             nodes,
         
-            cfg.red_laser_params,
-            cfg.blue_laser_params,
+            cfg_t.red_laser_params,
+            cfg_t.blue_laser_params,
         
             Δ0, 
             δ0
             )
 
-        ρt .= timeevolution.master_dynamic(cfg.tspan, ρ0, H, J; ode_kwargs...)[2];
+        ρt .= timeevolution.master_dynamic(cfg_t.tspan, ρ0, H, J; ode_kwargs...)[2];
         ρ  .+= ρt
         ρ2 .+= ρt .^ 2
     end
@@ -226,11 +236,11 @@ function simulation(cfg::RydbergConfig; ode_kwargs...)
         __simulation(sample)
     end;
 
-    return ρ ./ cfg.n_samples, ρ2 ./ cfg.n_samples
+    return ρ ./ cfg_t.n_samples, ρ2 ./ cfg_t.n_samples
 end;
 
 function Ω_twophoton(Ωr, Ωb, Δ)
-    return Ωb * Ωr / (2.0 * Δ)
+    return abs(Ωb * Ωr / (2.0 * Δ))
 end;
 
 function T_twophoton(Ωr, Ωb, Δ)
@@ -238,12 +248,37 @@ function T_twophoton(Ωr, Ωb, Δ)
 end;
 
 function δ_twophoton(Ωr, Ωb, Δ)
-    return (Ωr^2 - Ωb^2)/(4.0 * Δ)
+    return (abs(Ωr)^2 - abs(Ωb)^2)/(4.0 * Δ)
 end;
 
 function Ωr_required(Ω, Ωb, Δ)
-    return 2.0 * Δ * Ω / Ωb
+    return 2.0 * Δ * Ω / abs(Ωb)
 end;
+
+
+
+function calibrate_two_photon(cfg::RydbergConfig, n_samples=1000)
+    cfg_calibrated = deepcopy(cfg)
+    Ωr = cfg.red_laser_params[1]
+    Ωb = cfg.blue_laser_params[1]
+
+    samples = samples_generate(cfg.trap_params, cfg.atom_params, n_samples)[1]
+
+    # Correct single-photon Rabi frequencies to match temperature averaged two-photon Rabi frequency
+    samples_Ω2 = [Ω_twophoton(Ω(x, y, z, cfg_calibrated.red_laser_params), Ω(x, y, z, cfg_calibrated.blue_laser_params), Δ(vx, vz, cfg_calibrated.red_laser_params)) for (x, y, z, vx, _, vz) in samples]
+    factor_Ω2 = sqrt((sum(samples_Ω2) / length(samples)) / Ω_twophoton(Ωr, Ωb, cfg.detuning_params[1]))
+    Ωr_cor, Ωb_cor = Ωr / factor_Ω2, Ωb / factor_Ω2
+    cfg_calibrated.red_laser_params[1]  = Ωr_cor
+    cfg_calibrated.blue_laser_params[1] = Ωb_cor
+
+    # Correct resonance detuning to match temperature averaged AC Stark shifts
+    samples_δ = [δ_twophoton(Ω(x, y, z, cfg_calibrated.red_laser_params), Ω(x, y, z, cfg_calibrated.blue_laser_params), Δ(vx, vz, cfg_calibrated.red_laser_params)) for (x, y, z, vx, _, vz) in samples]
+    δ_cor = sum(samples_δ) / length(samples_δ)
+    δ_ideal = δ_twophoton(Ωr, Ωb, cfg.detuning_params[1])
+    cfg_calibrated.detuning_params[2] += δ_cor - δ_ideal
+
+    return cfg_calibrated
+end
 
 
 

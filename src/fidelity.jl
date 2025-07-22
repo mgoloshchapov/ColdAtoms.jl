@@ -68,10 +68,10 @@ function get_rydberg_infidelity(
     cfg::RydbergConfig;
     U=dense(identityoperator(ColdAtoms.basis)), 
     states=basis_fidelity_states, 
-    n_samples=1,
+    n_samples=100,
     ode_kwargs...)
 
-    configs = get_rydberg_fidelity_configs(cfg)
+    configs = get_rydberg_fidelity_configs(cfg, n_samples)
     names = collect(keys(configs))
     infidelities = Dict()
 
@@ -94,15 +94,29 @@ function get_rydberg_infidelity(
     return infidelities
 end
 
+
 function plot_rydberg_infidelity(infidelities)
     keys_iF   = collect(keys(infidelities))
-    values_iF = 100 .* collect(values(infidelities))
+    keys_ordered = [
+        "Total", 
+        "Atom motion", 
+        "Intermdeiate state decay", 
+        "Rydberg state decay",
+        "Laser noise"
+        ]
 
-    bar(keys_iF, values_iF; 
+    keys_final = [key for key in keys_ordered if key in keys_iF]
+    values_final = [100*infidelities[key] for key in keys_ordered if key in keys_iF]
+
+    p = bar(keys_final, values_final;
+    xrotation=45,
+    margin=10Plots.mm,
     ylabel="Infidelity, %", 
-    title="Error budget for 10π pulse",
-    angle=45,
+    title="Error budget for 2π pulse",
     label=nothing)
+    display(p)
+
+    return keys_final, values_final
 end
 
 function get_parity_fidelity(cfg::CZLPConfig; ode_kwargs...)
