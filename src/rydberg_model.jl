@@ -172,9 +172,8 @@ function simulation(cfg::RydbergConfig; ode_kwargs...)
         cfg.trap_params,
         cfg.atom_params,
         cfg.n_samples;
-        harmonic=false
+        harmonic=true
         )[1]
-    # samples[1] .*= 1e-9
 
     ωr, ωz = trap_frequencies(cfg.atom_params, cfg.trap_params);
     Δ0, δ0 = cfg.detuning_params;

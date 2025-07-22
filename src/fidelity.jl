@@ -9,7 +9,7 @@ basis_fidelity_states = [
 
 
 function get_rydberg_fidelity_configs(cfg, n_samples=20)
-    configs = Dict()
+    configs = OrderedDict()
 
     # Config to measure error from intermediate state decay
     cfg_t = deepcopy(cfg)
@@ -19,7 +19,7 @@ function get_rydberg_fidelity_configs(cfg, n_samples=20)
     cfg_t.laser_noise = false
     cfg_t.free_motion = true
     cfg_t.n_samples = 1
-    configs["intermdeiate_state_decay"] = cfg_t
+    configs["Intermdeiate state decay"] = cfg_t
 
     # Config to measure error from rydberg state decay
     cfg_t = deepcopy(cfg)
@@ -29,17 +29,17 @@ function get_rydberg_fidelity_configs(cfg, n_samples=20)
     cfg_t.laser_noise = false
     cfg_t.free_motion = true
     cfg_t.n_samples = 1
-    configs["rydberg_state_decay"] = cfg_t
+    configs["Rydberg state decay"] = cfg_t
 
     # Config to measure error from laser_noise
     cfg_t = deepcopy(cfg)
-    cfg_t.atom_params[2] = cfg_t.trap_params[1] * 0.001
+    cfg_t.atom_params[2] = 1.0
     cfg_t.spontaneous_decay_intermediate = false
     cfg_t.spontaneous_decay_rydberg = false
     cfg_t.laser_noise = true
     cfg_t.free_motion = false
     cfg_t.n_samples = n_samples
-    configs["laser_noise"] = cfg_t
+    configs["Laser noise"] = cfg_t
 
     # Config to measure error from temperature
     cfg_t = deepcopy(cfg)
@@ -48,7 +48,7 @@ function get_rydberg_fidelity_configs(cfg, n_samples=20)
     cfg_t.laser_noise = false
     cfg_t.free_motion = true
     cfg_t.n_samples = n_samples
-    configs["atom_motion"] = cfg_t
+    configs["Atom motion"] = cfg_t
 
 
     # Config to measure total error
@@ -58,7 +58,7 @@ function get_rydberg_fidelity_configs(cfg, n_samples=20)
     cfg_t.laser_noise = true
     cfg_t.free_motion = true
     cfg_t.n_samples = n_samples
-    configs["total"] = cfg_t
+    configs["Total"] = cfg_t
 
     return configs
 end 
@@ -94,6 +94,16 @@ function get_rydberg_infidelity(
     return infidelities
 end
 
+function plot_rydberg_infidelity(infidelities)
+    keys_iF   = collect(keys(infidelities))
+    values_iF = 100 .* collect(values(infidelities))
+
+    bar(keys_iF, values_iF; 
+    ylabel="Infidelity, %", 
+    title="Error budget for 10π pulse",
+    angle=45,
+    label=nothing)
+end
 
 function get_parity_fidelity(cfg::CZLPConfig; ode_kwargs...)
     cfg_parity = deepcopy(cfg)
