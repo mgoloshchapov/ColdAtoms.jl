@@ -260,7 +260,7 @@ end;
 """
 function simulation_mpi(cfg::RydbergConfig)
     samples = samples_generate(cfg.trap_params,
-        cfg.atom_params,cfg.n_samples; harmonic=false)[1]
+        cfg.atom_params,cfg.n_samples; harmonic=true)[1]
 
     MPI.Init()
     rank = MPI.Comm_rank(MPI.COMM_WORLD)
@@ -302,6 +302,7 @@ function simulation_mpi(cfg::RydbergConfig)
     @time for sample in samples #ProgressBars.ProgressBar(samples) #Bcasted_samples)
         Ht = GenerateHamiltonian(
             sample, ωr, ωz, cfg.free_motion, cfg.atom_motion,
+            cfg.laser_noise,
             tspan_noise, cfg.f,red_laser_phase_amplitudes,
             blue_laser_phase_amplitudes,nodes,
             cfg.red_laser_params,cfg.blue_laser_params,Δ0, δ0)
@@ -321,7 +322,7 @@ function simulation_mpi(cfg::RydbergConfig)
     if rank == 0
         return rho ./ cfg.n_samples #, rho2 ./ cfg.n_samples
     else
-        return "_", "_"
+        return "_"
     end;
 
 end;
