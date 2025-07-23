@@ -95,7 +95,12 @@ function get_rydberg_infidelity(
 end
 
 
-function plot_rydberg_infidelity(infidelities)
+function plot_rydberg_infidelity(
+    infidelities; 
+    dir_name="/Users/goloshch/ColdAtoms_test/experiments/23_07_2025/results/", 
+    file_name="plot.png",
+    title="Error budget for 2π pulse")
+
     keys_iF   = collect(keys(infidelities))
     keys_ordered = [
         "Total", 
@@ -112,8 +117,18 @@ function plot_rydberg_infidelity(infidelities)
     xrotation=45,
     margin=10Plots.mm,
     ylabel="Infidelity, %", 
-    title="Error budget for 2π pulse",
-    label=nothing)
+    title=title,
+    label=nothing,
+    dpi=300,
+    size=(600, 600),
+    xguidefontsize = 14,
+    yguidefontsize = 14,
+    xtickfontsize = 14,
+    ytickfontsize = 14
+    )
+
+    savefig("$(dir_name)$(file_name)")
+
     display(p)
 
     return keys_final, values_final
