@@ -48,7 +48,7 @@ end
     return Ω0 .* A(x, y, z, w0, z0; n=n, θ=θ) .* A_phase(x, y, z, w0, z0; θ=θ);
 end;
 
-@inline function Ω_blue(x, y, z, laser_params)
+@inline function Ω(x, y, z, laser_params)
     if length(laser_params) == 5
         Ω0, w0, z0, θ, n = laser_params;
         return Ω0 .* A_new(x, y, z, w0, z0; n=n, θ=θ) .* A_phase_new(x, y, z, w0, z0; θ=θ);
