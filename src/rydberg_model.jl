@@ -51,7 +51,7 @@ end;
 @inline function Ω(x, y, z, laser_params)
     if length(laser_params) == 5
         Ω0, w0, z0, θ, n = laser_params;
-        return Ω0 .* A(x, y, z, w0, z0; n=1, θ=0) .* A_phase(x, y, z, w0, z0; θ=0);
+        return Ω0 .* A(x, y, z, w0, z0; n=1, θ=θ) .* A_phase(x, y, z, w0, z0; θ=θ);
 
     elseif length(laser_params) == 6
         Ω0, w0, z0, beam_type, n, m = laser_params;
