@@ -99,6 +99,135 @@ function plot_rydberg_infidelity(
     infidelities; 
     dir_name="/Users/goloshch/ColdAtoms_test/experiments/23_07_2025/results/", 
     file_name="plot.png",
+    title="Error budget for 2π pulse",
+    blue=true)
+
+    red_color = RGBA(207.0/255, 71.0/255, 80.0/255, 1.0)
+    blue_color = RGBA(135.0/255,203.0/255,230.0/255,1.0)
+    if blue
+        color = blue_color 
+    else 
+        color = red_color
+    end
+
+    keys_iF   = collect(keys(infidelities))
+    keys_ordered = [
+        "Total", 
+        "Atom motion", 
+        "Intermdeiate state decay", 
+        "Rydberg state decay",
+        "Laser noise"
+        ]
+
+    keys_final = [key for key in keys_ordered if key in keys_iF]
+    values_final = [100*infidelities[key] for key in keys_ordered if key in keys_iF]
+
+    p = bar(keys_final, values_final;
+    xrotation=45,
+    margin=10Plots.mm,
+    ylabel="Infidelity, %", 
+    title=title,
+    label=nothing,
+    dpi=300,
+    size=(600, 600),
+    xguidefontsize = 14,
+    yguidefontsize = 14,
+    xtickfontsize = 14,
+    ytickfontsize = 14,
+    color=color
+    )
+
+    savefig("$(dir_name)$(file_name)")
+
+    display(p)
+
+    return keys_final, values_final
+end
+
+function get_parity_fidelity(cfg::CZLPConfig; ode_kwargs...)
+    cfg_parity = deepcopy(cfg)
+
+    ket_pos = (ket_0 + ket_1) / sqrt(2)
+    ket_ipos = (ket_0 + 1.0im * ket_1) / sqrt(2)
+
+
+    cfg_parity.ψ0 = ket_pos ⊗ ket_pos
+    ρ1 = simulation_czlp(cfg_parity; ode_kwargs...)[1][end]
+    cfg_parity.ψ0 = ket_ipos ⊗ ket_pos
+    ρ2 = simulation_czlp(cfg_parity; ode_kwargs...)[1][end]
+
+    Had = Id ⊗ ColdAtoms.Hadamard
+    # ρ1 .=  Had * ρ1 * dagger(Had)
+    # ρ2 .=  Had * ρ2 * dagger(Had)
+
+    Phi_p = (ket_0 ⊗ ket_0 + ket_1 ⊗ ket_1)/sqrt(2)
+    Phi_ip = (ket_0 ⊗ ket_0 + 1.0im * ket_1 ⊗ ket_1)/sqrt(2)
+
+    ϕ_list = [0.0:0.0001:2π;];
+    global_RZ = ϕ -> ColdAtoms.RZ(ϕ) ⊗ ColdAtoms.RZ(ϕ);
+
+    F_list_1 = [real(dagger(Phi_p)  * Had * global_RZ(ϕ) * ρ1 * dagger(Had * global_RZ(ϕ)) * Phi_p) for ϕ in ϕ_list];
+    F_list_2 = [real(dagger(Phi_ip) * Had * global_RZ(ϕ) * ρ2 * dagger(Had * global_RZ(ϕ)) * Phi_ip) for ϕ in ϕ_list];
+
+    plot(ϕ_list, [F_list_1, F_list_2])
+    return ϕ_list, F_list_1, F_list_2, ϕ_list[argmax(F_list_1)]
+end
+
+
+function get_parity_fidelity_temp(ρ, ϕ_RZ)
+    Had = Id ⊗ ColdAtoms.Hadamard
+
+    global_RZ = ColdAtoms.RZ(ϕ_RZ) ⊗ ColdAtoms.RZ(ϕ_RZ);
+    ρt = global_RZ * ρ * dagger(global_RZ);
+    ρt = Had * ρt * dagger(Had)
+
+    Phi_p = (ket_0 ⊗ ket_0 + ket_1 ⊗ ket_1)/sqrt(2)
+    Phi_ip = (ket_0 ⊗ ket_0 + 1.0im * ket_1 ⊗ ket_1)/sqrt(2)
+
+    F = real(dagger(Phi_p) * ρt * Phi_p)
+    return F, ρt
+end
+
+
+
+
+
+
+function get_cz_infidelity(
+    cfg::CZLPConfig;
+    n_samples=1,
+    ode_kwargs...)
+
+    configs = get_rydberg_fidelity_configs(cfg, n_samples)
+    names = collect(keys(configs))
+    infidelities = Dict()
+
+    ket_pos = (ket_0 + ket_1) / sqrt(2)
+    Φp = (ket_0 ⊗ ket_0 + ket_1 ⊗ ket_1)/sqrt(2);
+    Had = Id ⊗ ColdAtoms.Hadamard
+    global_RZ = ColdAtoms.RZ(cfg.ϕ_RZ) ⊗ ColdAtoms.RZ(cfg.ϕ_RZ);
+
+
+    for name in ProgressBar(names)
+        cfg_t = deepcopy(configs[name])
+        println("Measuring error from $(name)...")
+
+        cfg_t.ψ0 = ket_pos ⊗ ket_pos
+        ρ_real = simulation_czlp(cfg_t)[1][end]
+        ρ_real .= Had * global_RZ * ρ_real * dagger(Had * global_RZ)
+        infidelities[name] = 1.0 - real(dagger(Φp) * ρ_real * Φp)
+
+        println()
+        println("Infidelity from $(name): $(round(100.0*infidelities[name]; digits=4)) %")
+    end
+
+    return infidelities
+end
+
+
+function plot_cz_infidelity(infidelities;
+    dir_name="/Users/goloshch/ColdAtoms_test/experiments/23_07_2025/results/", 
+    file_name="plot_cz.png",
     title="Error budget for 2π pulse")
 
     keys_iF   = collect(keys(infidelities))
@@ -133,31 +262,4 @@ function plot_rydberg_infidelity(
     display(p)
 
     return keys_final, values_final
-end
-
-function get_parity_fidelity(cfg::CZLPConfig; ode_kwargs...)
-    cfg_parity = deepcopy(cfg)
-    ket_pos = (ket_0 + ket_1) / sqrt(2)
-    cfg_parity.ψ0 = ket_pos ⊗ ket_pos
-
-    ρ = simulation_czlp(cfg_parity; ode_kwargs...)[1][end]
-
-    Had = Id ⊗ ColdAtoms.Hadamard
-    ρ .=  Had * ρ * dagger(Had)
-    Phi_p = (ket_0 ⊗ ket_0 + ket_1 ⊗ ket_1)/sqrt(2)
-
-    F = real(dagger(Phi_p) * ρ * Phi_p)
-    return F, ρ
-end
-
-
-function get_parity_fidelity_temp(ρ, ϕ1; ode_kwargs...)
-    Had = Id ⊗ ColdAtoms.Hadamard
-    global_RZ = ColdAtoms.RZ(ϕ1) ⊗ ColdAtoms.RZ(ϕ1);
-
-    ρt =  Had * global_RZ * ρ * dagger(global_RZ) * dagger(Had)
-    Phi_p = (ket_0 ⊗ ket_0 + ket_1 ⊗ ket_1)/sqrt(2)
-
-    F = real(dagger(Phi_p) * ρt * Phi_p)
-    return F, ρt
 end

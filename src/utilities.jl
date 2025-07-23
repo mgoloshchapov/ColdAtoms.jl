@@ -229,5 +229,5 @@ mutable struct CZLPConfig
     ΔtoΩ::Float64
     Ωτ::Float64
     ξ::Float64
-    ϕ1::Float64
+    ϕ_RZ::Float64
 end

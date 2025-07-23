@@ -17,6 +17,7 @@ using ProgressBars
 using MPI
 using OrdinaryDiffEq
 using Colors
+using Statistics
 
 export 
     w0_to_z0, trap_frequencies, E, I,

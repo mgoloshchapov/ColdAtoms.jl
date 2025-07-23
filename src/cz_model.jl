@@ -9,7 +9,7 @@
 end;
 
 
-@inline function get_V(sample1, sample2,  ωr, ωz, atom_motion, free_motion, c6, eps=1e-16)
+@inline function get_V(sample1, sample2,  ωr, ωz, atom_motion, free_motion, c6, eps=1e-18)
     X1, Y1, Z1 = get_atom_trajectories(sample1, ωr, ωz, atom_motion, free_motion)[1:3]
     X2, Y2, Z2 = get_atom_trajectories(sample2, ωr, ωz, atom_motion, free_motion)[1:3]
     V = t -> (c6 / (eps + ((X1(t) - X2(t))^2 + (Y1(t) - Y2(t))^2 + (Z1(t) - Z2(t))^2)^3))
@@ -67,33 +67,70 @@ end
 
     return H
 end;
+
+
+"""
+To compensate for non-ideal blockade we have to correct ΔtoΩ as ΔtoΩ - Ω/2V
+
+Here we average V over atom temperature and get 
+"""
+function get_blockade_stark_shift_factor(
+    trap_params,
+    atom_params,
+    atom_centers,
+    Ω,
+    c6,
+    n_samples=10000
+    )
+    shift1, shift2 = [[atom_centers[1];zeros(3)]], [[atom_centers[2];zeros(3)]]
+    samples1 = samples_generate(
+        trap_params,
+        atom_params,
+        n_samples;
+        harmonic=true
+        )[1]
+    samples2 = samples_generate(
+        trap_params,
+        atom_params,
+        n_samples;
+        harmonic=true
+        )[1]
+    samples1 .+= shift1
+    samples2 .+= shift2
+
+    Rm6 = mean(map((s1, s2) -> 1.0 / (1e-18 + sum((s1[1:3] - s2[1:3]).^2)^3), samples1, samples2))
+
+    return - Ω / (2.0 * c6 * Rm6)
+end
    
 
-function simulation_czlp(cfg::CZLPConfig; ode_kwargs...)
+function simulation_czlp(
+    cfg::CZLPConfig;
+    ode_kwargs...)
     # Generate samples of atoms and shift their centers
     shift1, shift2 = [[cfg.atom_centers[1];zeros(3)]], [[cfg.atom_centers[2];zeros(3)]]
     samples1 = samples_generate(
         cfg.trap_params,
         cfg.atom_params,
         cfg.n_samples;
-        harmonic=false
+        harmonic=true
         )[1]
     samples2 = samples_generate(
         cfg.trap_params,
         cfg.atom_params,
         cfg.n_samples;
-        harmonic=false
+        harmonic=true
         )[1]
     samples1 .+= shift1
     samples2 .+= shift2
-
     
     # Unpack all parameters
     ωr, ωz = trap_frequencies(cfg.atom_params, cfg.trap_params);
     Δ0, δ0 = cfg.detuning_params;
-    Ωtwo = cfg.red_laser_params[1] * cfg.blue_laser_params[1] / (2 * Δ0);
-    δ0 += cfg.ΔtoΩ * Ωtwo;
-    τ = cfg.Ωτ / Ωtwo;
+    # Ωtwo = cfg.red_laser_params[1] * cfg.blue_laser_params[1] / (2 * Δ0);
+    # δ0 += cfg.ΔtoΩ * Ωtwo;
+    # τ = cfg.Ωτ / Ωtwo;
+    τ = cfg.tspan[end] / 2.0;
 
     tspan_noise = [0.0:cfg.tspan[end]/1000:cfg.tspan[end];];
     nodes = (tspan_noise, );
@@ -133,9 +170,6 @@ function simulation_czlp(cfg::CZLPConfig; ode_kwargs...)
         ρ2 .+= ρt .^ 2
     end;
 
-    # global_RZ = ColdAtoms.RZ(cfg.ϕ1) ⊗ ColdAtoms.RZ(cfg.ϕ1);
-    # ρ[end] .= global_RZ * ρ[end] * dagger(global_RZ);
-    # ρ2[end] .= global_RZ * ρ2[end] * dagger(global_RZ);
 
     return ρ ./ cfg.n_samples, ρ2 ./ cfg.n_samples;
 end

@@ -13,12 +13,24 @@ end;
 
 
 Hadamard = get_gate(Matrix{ComplexF64}([1 1; 1 -1]/sqrt(2)))
-X = get_gate(Matrix{ComplexF64}([0 1; 1 0]))
-Y = get_gate(Matrix{ComplexF64}([0 -1.0im; 1.0im 0]));
-Z = get_gate(Matrix{ComplexF64}([1 0; 0 -1]));
+X = get_gate(Matrix{ComplexF64}([
+        0 1; 
+        1 0
+        ]))
+Y = get_gate(Matrix{ComplexF64}([
+    0     -1.0im; 
+    1.0im      0
+    ]));
+Z = get_gate(Matrix{ComplexF64}([
+    1  0; 
+    0 -1
+    ]));
 RX = θ -> get_gate(Matrix{ComplexF64}([cos(θ/2) -1.0im*sin(θ/2); -1.0im*sin(θ/2) cos(θ/2)]));
 RY = θ -> get_gate(Matrix{ComplexF64}([cos(θ/2) -sin(θ/2); sin(θ/2) cos(θ/2)]));
-RZ = θ -> get_gate(Matrix{ComplexF64}([exp(-1.0im*θ/2) 0; 0 exp(1.0im*θ/2)]));
+RZ = θ -> get_gate(Matrix{ComplexF64}([
+    exp(-1.0im*θ/2)             0; 
+    0               exp(1.0im*θ/2)
+    ]));
 
 # CNOT = Matrix{ComplexF64}([
 #     1 0 0 0; 
