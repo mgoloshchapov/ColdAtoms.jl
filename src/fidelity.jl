@@ -124,7 +124,8 @@ function plot_rydberg_infidelity(
     xguidefontsize = 14,
     yguidefontsize = 14,
     xtickfontsize = 14,
-    ytickfontsize = 14
+    ytickfontsize = 14,
+    color=RGBA(135.0/255,203.0/255,230.0/255,1.0)
     )
 
     savefig("$(dir_name)$(file_name)")

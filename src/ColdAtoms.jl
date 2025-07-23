@@ -1,4 +1,5 @@
 module ColdAtoms
+using Distributed
 
 using Distributions, Random
 using PhysicalConstants.CODATA2018: c_0, k_B, m_u
@@ -10,12 +11,12 @@ using Interpolations
 using Polynomials
 using SpecialPolynomials
 using HypergeometricFunctions
-using Distributed
 using OrderedCollections
 using Plots
 using ProgressBars
 using MPI
 using OrdinaryDiffEq
+using Colors
 
 export 
     w0_to_z0, trap_frequencies, E, I,
