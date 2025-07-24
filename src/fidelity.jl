@@ -153,8 +153,8 @@ function get_parity_fidelity(cfg::CZLPConfig; ode_kwargs...)
 
     cfg_parity.ψ0 = ket_pos ⊗ ket_pos
     ρ1 = simulation_czlp(cfg_parity; ode_kwargs...)[1][end]
-    cfg_parity.ψ0 = ket_ipos ⊗ ket_pos
-    ρ2 = simulation_czlp(cfg_parity; ode_kwargs...)[1][end]
+    # cfg_parity.ψ0 = ket_ipos ⊗ ket_pos
+    # ρ2 = simulation_czlp(cfg_parity; ode_kwargs...)[1][end]
 
     Had = Id ⊗ ColdAtoms.Hadamard
     # ρ1 .=  Had * ρ1 * dagger(Had)
@@ -167,10 +167,12 @@ function get_parity_fidelity(cfg::CZLPConfig; ode_kwargs...)
     global_RZ = ϕ -> ColdAtoms.RZ(ϕ) ⊗ ColdAtoms.RZ(ϕ);
 
     F_list_1 = [real(dagger(Phi_p)  * Had * global_RZ(ϕ) * ρ1 * dagger(Had * global_RZ(ϕ)) * Phi_p) for ϕ in ϕ_list];
-    F_list_2 = [real(dagger(Phi_ip) * Had * global_RZ(ϕ) * ρ2 * dagger(Had * global_RZ(ϕ)) * Phi_ip) for ϕ in ϕ_list];
+    # F_list_2 = [real(dagger(Phi_ip) * Had * global_RZ(ϕ) * ρ2 * dagger(Had * global_RZ(ϕ)) * Phi_ip) for ϕ in ϕ_list];
 
-    plot(ϕ_list, [F_list_1, F_list_2])
-    return ϕ_list, F_list_1, F_list_2, ϕ_list[argmax(F_list_1)]
+    # plot(ϕ_list, [F_list_1, F_list_2])
+    plot(ϕ_list, F_list_1)
+    return ϕ_list, F_list_1, ϕ_list[argmax(F_list_1)]
+    # return ϕ_list, F_list_1, F_list_2, ϕ_list[argmax(F_list_1)]
 end
 
 
@@ -182,15 +184,10 @@ function get_parity_fidelity_temp(ρ, ϕ_RZ)
     ρt = Had * ρt * dagger(Had)
 
     Phi_p = (ket_0 ⊗ ket_0 + ket_1 ⊗ ket_1)/sqrt(2)
-    Phi_ip = (ket_0 ⊗ ket_0 + 1.0im * ket_1 ⊗ ket_1)/sqrt(2)
 
     F = real(dagger(Phi_p) * ρt * Phi_p)
     return F, ρt
 end
-
-
-
-
 
 
 function get_cz_infidelity(
@@ -205,9 +202,27 @@ function get_cz_infidelity(
     ket_pos = (ket_0 + ket_1) / sqrt(2)
     Φp = (ket_0 ⊗ ket_0 + ket_1 ⊗ ket_1)/sqrt(2);
     Had = Id ⊗ ColdAtoms.Hadamard
-    global_RZ = ColdAtoms.RZ(cfg.ϕ_RZ) ⊗ ColdAtoms.RZ(cfg.ϕ_RZ);
+    
+    cfg_t = deepcopy(cfg)
+    cfg_t.spontaneous_decay_intermediate    = false
+    cfg_t.spontaneous_decay_rydberg         = false
+    cfg_t.laser_noise                       = false
+    cfg_t.atom_params[2]                    = 1.0
+    cfg_t.n_samples                         = 1
 
+    println("Measuring error from calibration...")
+    ϕ_RZ = get_parity_fidelity(cfg_t)[3];
+    global_RZ = ColdAtoms.RZ(ϕ_RZ) ⊗ ColdAtoms.RZ(ϕ_RZ);
 
+    cfg_t.ψ0 = ket_pos ⊗ ket_pos
+    ρ_real = simulation_czlp(cfg_t)[1][end]
+    ρ_real .= Had * global_RZ * ρ_real * dagger(Had * global_RZ)
+    calibration_error = 1.0 - real(dagger(Φp) * ρ_real * Φp)
+
+    println()
+    println("Infidelity from calibration error: $(round(100.0*calibration_error; digits=4)) %")
+
+    
     for name in ProgressBar(names)
         cfg_t = deepcopy(configs[name])
         println("Measuring error from $(name)...")
@@ -215,13 +230,13 @@ function get_cz_infidelity(
         cfg_t.ψ0 = ket_pos ⊗ ket_pos
         ρ_real = simulation_czlp(cfg_t)[1][end]
         ρ_real .= Had * global_RZ * ρ_real * dagger(Had * global_RZ)
-        infidelities[name] = 1.0 - real(dagger(Φp) * ρ_real * Φp)
+        infidelities[name] = maximum([(1.0 - real(dagger(Φp) * ρ_real * Φp) - calibration_error), 0.0])
 
         println()
         println("Infidelity from $(name): $(round(100.0*infidelities[name]; digits=4)) %")
     end
 
-    return infidelities
+    return infidelities, calibration_error
 end
 
 

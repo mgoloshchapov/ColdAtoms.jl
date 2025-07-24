@@ -127,9 +127,6 @@ function simulation_czlp(
     # Unpack all parameters
     ωr, ωz = trap_frequencies(cfg.atom_params, cfg.trap_params);
     Δ0, δ0 = cfg.detuning_params;
-    # Ωtwo = cfg.red_laser_params[1] * cfg.blue_laser_params[1] / (2 * Δ0);
-    # δ0 += cfg.ΔtoΩ * Ωtwo;
-    # τ = cfg.Ωτ / Ωtwo;
     τ = cfg.tspan[end] / 2.0;
 
     tspan_noise = [0.0:cfg.tspan[end]/1000:cfg.tspan[end];];
@@ -163,7 +160,6 @@ function simulation_czlp(
                 Δ0, δ0,
                 cfg.c6)
 
-        # super_operator(t, rho) = H, J, Jdagger
         ρt = timeevolution.master_dynamic(cfg.tspan, ρ0, H, J; ode_kwargs...)[2];
 
         ρ  .+= ρt
