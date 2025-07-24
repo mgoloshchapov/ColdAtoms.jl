@@ -48,7 +48,7 @@ function HG_coefficients(p,q)
 end
 
 function simple_flattopHG_field(x,y,z,laser_params)
-    Ω, w0, zr, beam_type, n, m = laser_params;
+    Ω, w0, zr, beam_type, n, m, sqz = laser_params;
     w = w0 .* sqrt.(1.0 .+ (z ./zr) .^2);
     k = 2 * zr / w0^2
     phase0 = k .* z .+ k ./ 2 .* z .* (x.^2 .+ y.^2) ./ (z.^2 .+ zr.^2) 
@@ -59,11 +59,11 @@ function simple_flattopHG_field(x,y,z,laser_params)
         for j in 0:2:m
             gouy = (i+j+1) .* atan.(z ./ zr)
             cij = HG_coeff(trunc(Int,i/2),trunc(Int,n/2)) * HG_coeff(trunc(Int,j/2),trunc(Int,m/2))
-            E_sum += cij * HG.(x, w, i) * HG.(y, w, j) * exp.(-1.0im * gouy) 
+            E_sum += cij * HG.(x, w, i) * HG.(y, w * sqz, j) * exp.(-1.0im * gouy) 
             #E_sum += c[trunc(Int, i/2) + 1, trunc(Int, j/2) + 1] * HG.(x, w, i) * HG.(y, w, j) * exp.(-1.0im * gouy) 
         end;
     end;
-    return Ω .* w0 ./ w .* exp.(-1.0im * phase0) * E_sum
+    return Ω .* w0 .* E_sum ./ w .* exp.(-1.0im * phase0) 
 end
 
 function simple_flattopLG_field(x,y,z,laser_params)
