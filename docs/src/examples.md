@@ -2,7 +2,7 @@
 
 ## Release and recapture experiment
 
-Release and recapture method is used to measure temperature of single neutral atom in optical trap formed by gaussian beam. 
+Release and recapture method is used to measure temperature of single neutral atom in optical trap formed by gaussian beam.
 
 The trap is turned off by a variable amount of time and probability to recapture atom is measured. If we know atom mass and trap parameters, we can extract atom temperature by comparing experimental release and recapture curve with the modelling.
 
@@ -37,12 +37,11 @@ xlabel!("Time, μs")
 ylabel!("Recapture probability")
 ```
 
-## Two-photon Rydberg excitation 
+## Two-photon Rydberg excitation
 
-Two-photon Rydberg excitation is used, for example, to implement native CZ gate on neutral atom quantum computers. Here we implement modelling of two-photon Rydberg excitation with different sources of decoherence: atom dynamics, laser phase noise, spontaneous decay from intermediate state. 
+Two-photon Rydberg excitation is used, for example, to implement native CZ gate on neutral atom quantum computers. Here we implement modelling of two-photon Rydberg excitation with different sources of decoherence: atom dynamics, laser phase noise, spontaneous decay from intermediate state.
 
-
-Import necessary modules and specify atom and trap parameters. 
+Import necessary modules and specify atom and trap parameters.
 
 ```@example rydberg
 using ColdAtoms
@@ -128,7 +127,7 @@ decay_params = [Γ/4, 3*Γ/4];
 nothing #hide
 ```
 
-Now let's define simulation time and draw samples of single atom in optical trap using Metropolis sampler. 
+Now let's define simulation time and draw samples of single atom in optical trap using Metropolis sampler.
 
 ```@example rydberg
 # Period of Rabi oscillations
@@ -142,7 +141,7 @@ samples, acc_rate = samples_generate(trap_params, atom_params, N; skip=5000, fre
 nothing #hide
 ```
 
-Finally, we are ready to run our simulation. As a result, we receive density matrix and its squared values for error estimation. 
+Finally, we are ready to run our simulation. As a result, we receive density matrix and its squared values for error estimation.
 
 ```@example rydberg
 ψ0 = g1;
@@ -175,9 +174,9 @@ Finally, we are ready to run our simulation. As a result, we receive density mat
 nothing #hide
 ```
 
-Now we can average density matrix over projectors on system states and plot Rabi oscillations. 
+Now we can average density matrix over projectors on system states and plot Rabi oscillations.
 
-```@example rydberg 
+```@example rydberg
 # Take average of state populations over density matrix
 Pg = real(expect(g1 ⊗ dagger(g1), ρ_mean)); 
 Pp = real(expect(p1 ⊗ dagger(p1), ρ_mean)); 
