@@ -6,7 +6,7 @@
 [![docs](https://img.shields.io/badge/docs-latest-blue.svg)](https://mgoloshchapov.github.io/ColdAtoms.jl/dev/)
 
 
-This package provides a set of tools to simulate experiments with neutral atoms. 
+This package provides a set of tools to simulate experiments with neutral atoms.
 
 ## Installation
 
