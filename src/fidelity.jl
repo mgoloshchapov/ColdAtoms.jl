@@ -1,21 +1,21 @@
 basis_fidelity_states = [
-    ket_0, 
+    ket_0,
     ket_1,
     (ket_0 + ket_1)/sqrt(2),
     (ket_0 - ket_1)/sqrt(2),
     (ket_0 + 1.0im * ket_1)/sqrt(2),
-    (ket_0 - 1.0im * ket_1)/sqrt(2)
-    ]
+    (ket_0 - 1.0im * ket_1)/sqrt(2),
+]
 
 
-function get_rydberg_fidelity_configs(cfg, n_samples=20)
+function get_rydberg_fidelity_configs(cfg, n_samples = 20)
     configs = OrderedDict()
 
     # Config to measure error from intermediate state decay
     cfg_t = deepcopy(cfg)
     cfg_t.atom_params[2] = 1.0
     cfg_t.spontaneous_decay_intermediate = true
-    cfg_t.spontaneous_decay_rydberg      = false
+    cfg_t.spontaneous_decay_rydberg = false
     cfg_t.laser_noise = false
     cfg_t.free_motion = true
     cfg_t.n_samples = 1
@@ -25,7 +25,7 @@ function get_rydberg_fidelity_configs(cfg, n_samples=20)
     cfg_t = deepcopy(cfg)
     cfg_t.atom_params[2] = 1.0
     cfg_t.spontaneous_decay_intermediate = false
-    cfg_t.spontaneous_decay_rydberg      = true
+    cfg_t.spontaneous_decay_rydberg = true
     cfg_t.laser_noise = false
     cfg_t.free_motion = true
     cfg_t.n_samples = 1
@@ -61,15 +61,16 @@ function get_rydberg_fidelity_configs(cfg, n_samples=20)
     configs["Total"] = cfg_t
 
     return configs
-end 
+end
 
 
 function get_rydberg_infidelity(
     cfg::RydbergConfig;
-    U=dense(identityoperator(ColdAtoms.basis)), 
-    states=basis_fidelity_states, 
-    n_samples=100,
-    ode_kwargs...)
+    U = dense(identityoperator(ColdAtoms.basis)),
+    states = basis_fidelity_states,
+    n_samples = 100,
+    ode_kwargs...,
+)
 
     configs = get_rydberg_fidelity_configs(cfg, n_samples)
     names = collect(keys(configs))
@@ -96,45 +97,48 @@ end
 
 
 function plot_rydberg_infidelity(
-    infidelities; 
-    dir_name="/Users/goloshch/ColdAtoms_test/experiments/23_07_2025/results/", 
-    file_name="plot.png",
-    title="Error budget for 2π pulse",
-    blue=true)
+    infidelities;
+    dir_name = "/Users/goloshch/ColdAtoms_test/experiments/23_07_2025/results/",
+    file_name = "plot.png",
+    title = "Error budget for 2π pulse",
+    blue = true,
+)
 
     red_color = RGBA(207.0/255, 71.0/255, 80.0/255, 1.0)
-    blue_color = RGBA(135.0/255,203.0/255,230.0/255,1.0)
+    blue_color = RGBA(135.0/255, 203.0/255, 230.0/255, 1.0)
     if blue
-        color = blue_color 
-    else 
+        color = blue_color
+    else
         color = red_color
     end
 
-    keys_iF   = collect(keys(infidelities))
+    keys_iF = collect(keys(infidelities))
     keys_ordered = [
-        "Total", 
-        "Atom motion", 
-        "Intermdeiate state decay", 
+        "Total",
+        "Atom motion",
+        "Intermdeiate state decay",
         "Rydberg state decay",
-        "Laser noise"
-        ]
+        "Laser noise",
+    ]
 
     keys_final = [key for key in keys_ordered if key in keys_iF]
     values_final = [100*infidelities[key] for key in keys_ordered if key in keys_iF]
 
-    p = bar(keys_final, values_final;
-    xrotation=45,
-    margin=10Plots.mm,
-    ylabel="Infidelity, %", 
-    title=title,
-    label=nothing,
-    dpi=300,
-    size=(600, 600),
-    xguidefontsize = 14,
-    yguidefontsize = 14,
-    xtickfontsize = 14,
-    ytickfontsize = 14,
-    color=color
+    p = bar(
+        keys_final,
+        values_final;
+        xrotation = 45,
+        margin = 10Plots.mm,
+        ylabel = "Infidelity, %",
+        title = title,
+        label = nothing,
+        dpi = 300,
+        size = (600, 600),
+        xguidefontsize = 14,
+        yguidefontsize = 14,
+        xtickfontsize = 14,
+        ytickfontsize = 14,
+        color = color,
     )
 
     savefig("$(dir_name)$(file_name)")
@@ -166,7 +170,9 @@ function get_parity_fidelity(cfg::CZLPConfig; ode_kwargs...)
     ϕ_list = [0.0:0.0001:2π;];
     global_RZ = ϕ -> ColdAtoms.RZ(ϕ) ⊗ ColdAtoms.RZ(ϕ);
 
-    F_list_1 = [real(dagger(Phi_p)  * Had * global_RZ(ϕ) * ρ1 * dagger(Had * global_RZ(ϕ)) * Phi_p) for ϕ in ϕ_list];
+    F_list_1 = [
+        real(dagger(Phi_p) * Had * global_RZ(ϕ) * ρ1 * dagger(Had * global_RZ(ϕ)) * Phi_p) for ϕ in ϕ_list
+    ];
     # F_list_2 = [real(dagger(Phi_ip) * Had * global_RZ(ϕ) * ρ2 * dagger(Had * global_RZ(ϕ)) * Phi_ip) for ϕ in ϕ_list];
 
     # plot(ϕ_list, [F_list_1, F_list_2])
@@ -190,10 +196,7 @@ function get_parity_fidelity_temp(ρ, ϕ_RZ)
 end
 
 
-function get_cz_infidelity(
-    cfg::CZLPConfig;
-    n_samples=1,
-    ode_kwargs...)
+function get_cz_infidelity(cfg::CZLPConfig; n_samples = 1, ode_kwargs...)
 
     configs = get_rydberg_fidelity_configs(cfg, n_samples)
     names = collect(keys(configs))
@@ -202,13 +205,13 @@ function get_cz_infidelity(
     ket_pos = (ket_0 + ket_1) / sqrt(2)
     Φp = (ket_0 ⊗ ket_0 + ket_1 ⊗ ket_1)/sqrt(2);
     Had = Id ⊗ ColdAtoms.Hadamard
-    
+
     cfg_t = deepcopy(cfg)
-    cfg_t.spontaneous_decay_intermediate    = false
-    cfg_t.spontaneous_decay_rydberg         = false
-    cfg_t.laser_noise                       = false
-    cfg_t.atom_params[2]                    = 1.0
-    cfg_t.n_samples                         = 1
+    cfg_t.spontaneous_decay_intermediate = false
+    cfg_t.spontaneous_decay_rydberg = false
+    cfg_t.laser_noise = false
+    cfg_t.atom_params[2] = 1.0
+    cfg_t.n_samples = 1
 
     println("Measuring error from calibration...")
     ϕ_RZ = get_parity_fidelity(cfg_t)[3];
@@ -220,9 +223,11 @@ function get_cz_infidelity(
     calibration_error = 1.0 - real(dagger(Φp) * ρ_real * Φp)
 
     println()
-    println("Infidelity from calibration error: $(round(100.0*calibration_error; digits=4)) %")
+    println(
+        "Infidelity from calibration error: $(round(100.0*calibration_error; digits=4)) %",
+    )
 
-    
+
     for name in ProgressBar(names)
         cfg_t = deepcopy(configs[name])
         println("Measuring error from $(name)...")
@@ -230,7 +235,8 @@ function get_cz_infidelity(
         cfg_t.ψ0 = ket_pos ⊗ ket_pos
         ρ_real = simulation_czlp(cfg_t)[1][end]
         ρ_real .= Had * global_RZ * ρ_real * dagger(Had * global_RZ)
-        infidelities[name] = maximum([(1.0 - real(dagger(Φp) * ρ_real * Φp) - calibration_error), 0.0])
+        infidelities[name] =
+            maximum([(1.0 - real(dagger(Φp) * ρ_real * Φp) - calibration_error), 0.0])
 
         println()
         println("Infidelity from $(name): $(round(100.0*infidelities[name]; digits=4)) %")
@@ -240,36 +246,40 @@ function get_cz_infidelity(
 end
 
 
-function plot_cz_infidelity(infidelities;
-    dir_name="/Users/goloshch/ColdAtoms_test/experiments/23_07_2025/results/", 
-    file_name="plot_cz.png",
-    title="Error budget for 2π pulse")
+function plot_cz_infidelity(
+    infidelities;
+    dir_name = "/Users/goloshch/ColdAtoms_test/experiments/23_07_2025/results/",
+    file_name = "plot_cz.png",
+    title = "Error budget for 2π pulse",
+)
 
-    keys_iF   = collect(keys(infidelities))
+    keys_iF = collect(keys(infidelities))
     keys_ordered = [
-        "Total", 
-        "Atom motion", 
-        "Intermdeiate state decay", 
+        "Total",
+        "Atom motion",
+        "Intermdeiate state decay",
         "Rydberg state decay",
-        "Laser noise"
-        ]
+        "Laser noise",
+    ]
 
     keys_final = [key for key in keys_ordered if key in keys_iF]
     values_final = [100*infidelities[key] for key in keys_ordered if key in keys_iF]
 
-    p = bar(keys_final, values_final;
-    xrotation=45,
-    margin=10Plots.mm,
-    ylabel="Infidelity, %", 
-    title=title,
-    label=nothing,
-    dpi=300,
-    size=(600, 600),
-    xguidefontsize = 14,
-    yguidefontsize = 14,
-    xtickfontsize = 14,
-    ytickfontsize = 14,
-    color=RGBA(135.0/255,203.0/255,230.0/255,1.0)
+    p = bar(
+        keys_final,
+        values_final;
+        xrotation = 45,
+        margin = 10Plots.mm,
+        ylabel = "Infidelity, %",
+        title = title,
+        label = nothing,
+        dpi = 300,
+        size = (600, 600),
+        xguidefontsize = 14,
+        yguidefontsize = 14,
+        xtickfontsize = 14,
+        ytickfontsize = 14,
+        color = RGBA(135.0/255, 203.0/255, 230.0/255, 1.0),
     )
 
     savefig("$(dir_name)$(file_name)")
