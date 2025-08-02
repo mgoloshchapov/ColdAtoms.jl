@@ -2,7 +2,6 @@ using ColdAtoms
 using QuantumOptics
 using Serialization
 
-
 function get_default_configs()
     # Atom params
     m = 86.9091835;
@@ -26,13 +25,11 @@ function get_default_configs()
     σg1 = 18.0 * 1e-3;   #MHz
     σg2 = 1.5 * 1e-3;    #MHz
 
-
     red_laser_phase_params = [h0, [hg1, hg2], [σg1, σg2], [fg1, fg2]];
     blue_laser_phase_params = [h0, [hg1, hg2], [σg1, σg2], [fg1, fg2]];
     f = [0.01:0.0025:1.0;];
     red_laser_phase_amplitudes = ϕ_amplitudes(f, red_laser_phase_params);
     blue_laser_phase_amplitudes = ϕ_amplitudes(f, blue_laser_phase_params);
-
 
     ### Excitation beam parameters
     λr = 0.795;
@@ -68,7 +65,7 @@ function get_default_configs()
     # Simulation params
     T0 = T_twophoton(Ωr, Ωb, Δ0)
     # tspan = [0.0:T0/10:2*T0;];
-    tspan = [0.0:(T0/20):(5*T0);];
+    tspan = [0.0:(T0 / 20):(5 * T0);];
     ψ0 = ket_1;
     n_samples = 20;
 
@@ -97,7 +94,7 @@ function get_default_configs()
         free_motion,
         laser_noise,
         spontaneous_decay_intermediate,
-        spontaneous_decay_rydberg,
+        spontaneous_decay_rydberg
     );
 
     d = 2.0;
@@ -114,7 +111,6 @@ function get_default_configs()
     ϕ1 = (ϕ2 - π)/2
     # tspan_cz = [0.0:τ/10:2*τ;];
     tspan_cz = [0.0, 2*τ];
-
 
     cfg_czlp = ColdAtoms.CZLPConfig(
         tspan_cz,
@@ -139,7 +135,7 @@ function get_default_configs()
         ΔtoΩ,
         Ωτ,
         ξ,
-        ϕ1,
+        ϕ1
     )
 
     return cfg, cfg_czlp

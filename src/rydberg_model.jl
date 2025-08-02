@@ -24,13 +24,12 @@ const σrl = ket_r ⊗ dagger(ket_l);
 
 const operators = [np, nr, σ1p, σp1, σpr, σrp];
 
-
 @inline function get_atom_trajectories(
-    sample::Vector{Float64},
-    ωr::Float64,
-    ωz::Float64,
-    atom_motion::Bool,
-    free_motion::Bool,
+        sample::Vector{Float64},
+        ωr::Float64,
+        ωz::Float64,
+        atom_motion::Bool,
+        free_motion::Bool
 )
     x, y, z, vx, vy, vz = atom_motion ? sample : zeros(Float64, 6);
     X = t -> R(t, x, vx, ωr; free = free_motion);
@@ -107,12 +106,11 @@ function Hamiltonian(Ωr, Ωb, Δ, δ)
             t -> Ωr(t) ./ 2.0,
             t -> conj.(Ωr(t)) ./ 2.0,
             t -> Ωb(t)/2.0,
-            t -> conj.(Ωb(t)) ./ 2.0,
+            t -> conj.(Ωb(t)) ./ 2.0
         ],
-        [np, nr, σgp, σpg, σpr, σrp],
+        [np, nr, σgp, σpg, σpr, σrp]
     )
 end;
-
 
 #Jump operators for master equation
 @inline function JumpOperators(decay_params)
@@ -122,26 +120,24 @@ end;
 end;
 
 @inline function GenerateHamiltonian(
-    sample,
-    ωr,
-    ωz,
-    free_motion,
-    atom_motion,
-    laser_noise,
-    tspan_noise,
-    f,
-    red_laser_phase_amplitudes,
-    blue_laser_phase_amplitudes,
-    nodes,
-    red_laser_params,
-    blue_laser_params,
-    Δ0,
-    δ0,
+        sample,
+        ωr,
+        ωz,
+        free_motion,
+        atom_motion,
+        laser_noise,
+        tspan_noise,
+        f,
+        red_laser_phase_amplitudes,
+        blue_laser_phase_amplitudes,
+        nodes,
+        red_laser_params,
+        blue_laser_params,
+        Δ0,
+        δ0
 )
     # Trajectories
     X, Y, Z, Vx, Vy, Vz = get_atom_trajectories(sample, ωr, ωz, atom_motion, free_motion);
-
-
 
     # Interpolate phase noise traces to pass to hamiltonian
     if laser_noise
@@ -156,7 +152,6 @@ end;
         ϕ_blue = t -> 0.0;
     end
 
-
     # Hamiltonian params trajectories
     Ωr = t -> exp(1.0im * ϕ_red(t)) * Ω(X(t), Y(t), Z(t), red_laser_params);
     Ωb = t -> exp(1.0im * ϕ_blue(t)) * Ω(X(t), Y(t), Z(t), blue_laser_params);
@@ -168,17 +163,15 @@ end;
             t -> Ωr(t) / 2.0,
             t -> conj(Ωr(t)) / 2.0,
             t -> Ωb(t) / 2.0,
-            t -> conj(Ωb(t)) / 2.0,
+            t -> conj(Ωb(t)) / 2.0
         ],
-        operators,
+        operators
     );
 
     return H
 end;
 
-
 function simulation(cfg::RydbergConfig; temperature_calibrate = false, ode_kwargs...)
-
     if temperature_calibrate
         cfg_t = calibrate_two_photon(cfg)
     else
@@ -189,13 +182,13 @@ function simulation(cfg::RydbergConfig; temperature_calibrate = false, ode_kwarg
         cfg_t.trap_params,
         cfg_t.atom_params,
         cfg_t.n_samples;
-        harmonic = true,
+        harmonic = true
     )[1]
 
     ωr, ωz = trap_frequencies(cfg_t.atom_params, cfg_t.trap_params);
     Δ0, δ0 = cfg_t.detuning_params;
 
-    tspan_noise = [0.0:(cfg_t.tspan[end]/1000):cfg_t.tspan[end];];
+    tspan_noise = [0.0:(cfg_t.tspan[end] / 1000):cfg_t.tspan[end];];
     nodes = (tspan_noise,);
     red_laser_phase_amplitudes = cfg_t.red_laser_phase_amplitudes;
     blue_laser_phase_amplitudes = cfg_t.blue_laser_phase_amplitudes;
@@ -207,11 +200,10 @@ function simulation(cfg::RydbergConfig; temperature_calibrate = false, ode_kwarg
 
     ρ0 = cfg_t.ψ0 ⊗ dagger(cfg_t.ψ0);
     #Density matrix averaged over realizations of laser noise and atom dynamics.
-    ρ = [zero(ρ0) for _ ∈ 1:length(cfg_t.tspan)];
-    ρt = [zero(ρ0) for _ ∈ 1:length(cfg_t.tspan)];
+    ρ = [zero(ρ0) for _ in 1:length(cfg_t.tspan)];
+    ρt = [zero(ρ0) for _ in 1:length(cfg_t.tspan)];
     #Second moment for error estimation of level populations.
-    ρ2 = [zero(ρ0) for _ ∈ 1:length(cfg_t.tspan)];
-
+    ρ2 = [zero(ρ0) for _ in 1:length(cfg_t.tspan)];
 
     function __simulation(sample)
         H = GenerateHamiltonian(
@@ -229,7 +221,7 @@ function simulation(cfg::RydbergConfig; temperature_calibrate = false, ode_kwarg
             cfg_t.red_laser_params,
             cfg_t.blue_laser_params,
             Δ0,
-            δ0,
+            δ0
         )
 
         ρt .= timeevolution.master_dynamic(cfg_t.tspan, ρ0, H, J; ode_kwargs...)[2];
@@ -260,8 +252,6 @@ function Ωr_required(Ω, Ωb, Δ)
     return 2.0 * Δ * Ω / abs(Ωb)
 end;
 
-
-
 function calibrate_two_photon(cfg::RydbergConfig, n_samples = 1000)
     cfg_calibrated = deepcopy(cfg)
     Ωr = cfg.red_laser_params[1]
@@ -270,13 +260,11 @@ function calibrate_two_photon(cfg::RydbergConfig, n_samples = 1000)
     samples = samples_generate(cfg.trap_params, cfg.atom_params, n_samples)[1]
 
     # Correct single-photon Rabi frequencies to match temperature averaged two-photon Rabi frequency
-    samples_Ω2 = [
-        Ω_twophoton(
-            Ω(x, y, z, cfg_calibrated.red_laser_params),
-            Ω(x, y, z, cfg_calibrated.blue_laser_params),
-            Δ(vx, vz, cfg_calibrated.red_laser_params),
-        ) for (x, y, z, vx, _, vz) in samples
-    ]
+    samples_Ω2 = [Ω_twophoton(
+                      Ω(x, y, z, cfg_calibrated.red_laser_params),
+                      Ω(x, y, z, cfg_calibrated.blue_laser_params),
+                      Δ(vx, vz, cfg_calibrated.red_laser_params)
+                  ) for (x, y, z, vx, _, vz) in samples]
     factor_Ω2 = sqrt(
         (sum(samples_Ω2) / length(samples)) / Ω_twophoton(Ωr, Ωb, cfg.detuning_params[1]),
     )
@@ -285,21 +273,17 @@ function calibrate_two_photon(cfg::RydbergConfig, n_samples = 1000)
     cfg_calibrated.blue_laser_params[1] = Ωb_cor
 
     # Correct resonance detuning to match temperature averaged AC Stark shifts
-    samples_δ = [
-        δ_twophoton(
-            Ω(x, y, z, cfg_calibrated.red_laser_params),
-            Ω(x, y, z, cfg_calibrated.blue_laser_params),
-            Δ(vx, vz, cfg_calibrated.red_laser_params),
-        ) for (x, y, z, vx, _, vz) in samples
-    ]
+    samples_δ = [δ_twophoton(
+                     Ω(x, y, z, cfg_calibrated.red_laser_params),
+                     Ω(x, y, z, cfg_calibrated.blue_laser_params),
+                     Δ(vx, vz, cfg_calibrated.red_laser_params)
+                 ) for (x, y, z, vx, _, vz) in samples]
     δ_cor = sum(samples_δ) / length(samples_δ)
     δ_ideal = δ_twophoton(Ωr, Ωb, cfg.detuning_params[1])
     cfg_calibrated.detuning_params[2] += δ_cor - δ_ideal
 
     return cfg_calibrated
 end
-
-
 
 """
     struct send_rho
@@ -313,8 +297,8 @@ end
     MPI.@RegisterOp(sum_for_MPI, send_rho)#T::Vector{Operator{NLevelBasis{Int64}, NLevelBasis{Int64}, Matrix{ComplexF64}}})
 """
 function simulation_mpi(cfg::RydbergConfig)
-    samples =
-        samples_generate(cfg.trap_params, cfg.atom_params, cfg.n_samples; harmonic = true)[1]
+    samples = samples_generate(
+        cfg.trap_params, cfg.atom_params, cfg.n_samples; harmonic = true)[1]
 
     MPI.Init()
     rank = MPI.Comm_rank(MPI.COMM_WORLD)
@@ -329,7 +313,7 @@ function simulation_mpi(cfg::RydbergConfig)
         cfg.trap_params,
         cfg.atom_params,
         cfg.n_samples÷size;
-        harmonic = false,
+        harmonic = false
     )[1]
     println(length(samples))
 
@@ -344,22 +328,20 @@ function simulation_mpi(cfg::RydbergConfig)
     J, Jdagger = JumpOperators(decay_params)
     ρ0 = cfg.ψ0 ⊗ dagger(cfg.ψ0);
 
-    ρ_res = [zero(ρ0) for _ ∈ 1:length(cfg.tspan)];
-    ρt = [zero(ρ0) for _ ∈ 1:length(cfg.tspan)];
+    ρ_res = [zero(ρ0) for _ in 1:length(cfg.tspan)];
+    ρt = [zero(ρ0) for _ in 1:length(cfg.tspan)];
     #ρ2 = [zero(ρ0) for _ ∈ 1:length(cfg.tspan)];
 
-    rho = [zero(ρ0.data) for _ ∈ 1:length(cfg.tspan)]; #real(expect(r1 ⊗ dagger(r1), ρ_res)) #[zero(real(expect(r1 ⊗ dagger(r1) ⊗ Id, ρ0))) for _ ∈ 1:length(cfg.tspan)];
-    rec_rho = [zero(ρ0.data) for _ ∈ 1:length(cfg.tspan)]; #real(expect(r1 ⊗ dagger(r1) , ρ_res)) #rec_rho  = [zero(real(expect(r1 ⊗ dagger(r1) ⊗ Id, ρ0))) for _ ∈ 1:length(cfg.tspan)];
+    rho = [zero(ρ0.data) for _ in 1:length(cfg.tspan)]; #real(expect(r1 ⊗ dagger(r1), ρ_res)) #[zero(real(expect(r1 ⊗ dagger(r1) ⊗ Id, ρ0))) for _ ∈ 1:length(cfg.tspan)];
+    rec_rho = [zero(ρ0.data) for _ in 1:length(cfg.tspan)]; #real(expect(r1 ⊗ dagger(r1) , ρ_res)) #rec_rho  = [zero(real(expect(r1 ⊗ dagger(r1) ⊗ Id, ρ0))) for _ ∈ 1:length(cfg.tspan)];
     #rho2 = [zero(ρ0) for _ ∈ 1:length(cfg.tspan)];
 
-    tspan_noise = [0.0:(cfg.tspan[end]/1000):cfg.tspan[end];];
+    tspan_noise = [0.0:(cfg.tspan[end] / 1000):cfg.tspan[end];];
     nodes = (tspan_noise,);
-    red_laser_phase_amplitudes =
-        cfg.laser_noise ? cfg.red_laser_phase_amplitudes :
-        zero(cfg.red_laser_phase_amplitudes);
-    blue_laser_phase_amplitudes =
-        cfg.laser_noise ? cfg.blue_laser_phase_amplitudes :
-        zero(cfg.blue_laser_phase_amplitudes);
+    red_laser_phase_amplitudes = cfg.laser_noise ? cfg.red_laser_phase_amplitudes :
+                                 zero(cfg.red_laser_phase_amplitudes);
+    blue_laser_phase_amplitudes = cfg.laser_noise ? cfg.blue_laser_phase_amplitudes :
+                                  zero(cfg.blue_laser_phase_amplitudes);
 
     N = length(samples)
     @time for sample in samples #ProgressBars.ProgressBar(samples) #Bcasted_samples)
@@ -378,7 +360,7 @@ function simulation_mpi(cfg::RydbergConfig)
             cfg.red_laser_params,
             cfg.blue_laser_params,
             Δ0,
-            δ0,
+            δ0
         )
 
         super_operator(t, rho) = Ht, J, Jdagger
@@ -398,5 +380,4 @@ function simulation_mpi(cfg::RydbergConfig)
     else
         return "_"
     end;
-
 end;

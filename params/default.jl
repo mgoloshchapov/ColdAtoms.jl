@@ -39,7 +39,6 @@ M2 = 1.0 #1.3
 atom_params = [m, kT];
 trap_params = [U0, w0, z0/M2];
 
-
 Δ0 = 2.0 * π * 1500; #904.0 #
 Ωb = 2π * 96; #60.0; #96
 blue_laser_params0 = [Ωb, wb, zb];

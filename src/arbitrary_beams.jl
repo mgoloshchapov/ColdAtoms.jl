@@ -15,7 +15,7 @@ end
 
 function HG(x, w, n)
     her_arg = zeros(n+1)
-    her_arg[n+1] = 1
+    her_arg[n + 1] = 1
     Hn = Hermite(her_arg)
     #norm = 2^(n/2) * factorial(n)^0.5 * (pi/2)^(1/4)
     return exp.(-x .^ 2 ./ w^2) * Hn.(2^0.5 .* x ./ w) #./ norm
@@ -23,7 +23,7 @@ end
 
 function LG_coeff(k, n)
     res = 0.0
-    for i = k:n
+    for i in k:n
         res += factorial(i) / (2^(i) * factorial(i - k))
     end;
     return (-1.0)^k * res / factorial(k)
@@ -31,7 +31,7 @@ end
 
 function HG_coeff(k, n)
     res = 0.0
-    for i = k:n
+    for i in k:n
         res += factorial(2*i) / (factorial(i) * 2^(3*i) * factorial(i - k) * factorial(2*k))
     end;
     return res
@@ -39,8 +39,8 @@ end
 
 function HG_coefficients(p, q)
     c = zeros(p, q)
-    for i = 1:p
-        for j = 1:q
+    for i in 1:p
+        for j in 1:q
             c[i, j] = HG_coeff(i, p-1) * HG_coeff(j, q-1)
         end;
     end;
@@ -55,12 +55,11 @@ function simple_flattopHG_field(x, y, z, laser_params)
 
     E_sum = 0.0 + 0.0im
     #c = HG_coefficients(trunc(Int, n/2)+1, trunc(Int, m/2)+1)
-    for i = 0:2:n
-        for j = 0:2:m
+    for i in 0:2:n
+        for j in 0:2:m
             gouy = (i+j+1) .* atan.(z ./ zr)
-            cij =
-                HG_coeff(trunc(Int, i/2), trunc(Int, n/2)) *
-                HG_coeff(trunc(Int, j/2), trunc(Int, m/2))
+            cij = HG_coeff(trunc(Int, i/2), trunc(Int, n/2)) *
+                  HG_coeff(trunc(Int, j/2), trunc(Int, m/2))
             E_sum += cij * HG.(x, w, i) * HG.(y, w * sqz, j) * exp.(-1.0im * gouy)
             #E_sum += c[trunc(Int, i/2) + 1, trunc(Int, j/2) + 1] * HG.(x, w, i) * HG.(y, w, j) * exp.(-1.0im * gouy)
         end;
@@ -76,11 +75,10 @@ function simple_flattopLG_field(x, y, z, laser_params)
 
     E_sum = 0.0 + 0.0im
     Nd2 = trunc(Int, l/2)
-    for i = 0:Nd2
-        E_sum +=
-            LG_coeff(i, Nd2) *
-            LG.(x .^ 2 .+ y .^ 2, w, i) *
-            exp.(-1.0im * (i+1) .* atan.(z ./ zr))
+    for i in 0:Nd2
+        E_sum += LG_coeff(i, Nd2) *
+                 LG.(x .^ 2 .+ y .^ 2, w, i) *
+                 exp.(-1.0im * (i+1) .* atan.(z ./ zr))
     end;
     return Ω .* w0 ./ w .* exp.(-1.0im * phase0) * E_sum
 end

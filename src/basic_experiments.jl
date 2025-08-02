@@ -46,7 +46,6 @@ function release_evolve(tspan, cord, atom_params, trap_params; eps = 1e-3)
     return recap
 end;
 
-
 """
     release_recapture(tspan, trap_params, atom_params, N; freq=10, skip=1000, eps=1e-3, harmonic=true)
 
@@ -70,26 +69,27 @@ If `harmonic` is set to `true`, acceptance rate is set to 1.0
 
 """
 function release_recapture(
-    tspan,
-    trap_params,
-    atom_params,
-    N;
-    freq = 10,
-    skip = 1000,
-    eps = 1e-3,
-    harmonic = true,
+        tspan,
+        trap_params,
+        atom_params,
+        N;
+        freq = 10,
+        skip = 1000,
+        eps = 1e-3,
+        harmonic = true
 )
-    samples, acc_rate = samples_generate(
+    samples,
+    acc_rate = samples_generate(
         trap_params,
         atom_params,
         N;
         freq = freq,
         skip = skip,
-        harmonic = harmonic,
+        harmonic = harmonic
     );
     recapture = zeros(length(tspan));
 
-    for i ∈ 1:N
+    for i in 1:N
         recapture .+= release_evolve(tspan, samples[i], atom_params, trap_params; eps = eps);
     end;
 

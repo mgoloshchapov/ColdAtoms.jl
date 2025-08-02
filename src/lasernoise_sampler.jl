@@ -4,7 +4,7 @@ function Sϕ(f, laser_phase_params)
     res = 2.0 * h0 * ones(length(f));
 
     if length(hg) > 0
-        for i ∈ [1:length(hg);]
+        for i in [1:length(hg);]
             res = res .+ 2*hg[i] .* exp.(-(f .- fg[i]) .^ 2 ./ (2 * σg[i]^2));
         end;
     end;
@@ -19,7 +19,7 @@ function ϕ_amplitudes(f, laser_phase_params)
     res = 2.0 * h0 * ones(length(f));
 
     if length(hg) > 0
-        for i ∈ [1:length(hg);]
+        for i in [1:length(hg);]
             res = res .+ 2*hg[i] .* exp.(-(f .- fg[i]) .^ 2 ./ (2 * σg[i]^2));
         end;
     end;

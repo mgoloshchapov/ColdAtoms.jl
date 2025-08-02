@@ -9,11 +9,10 @@
         sqrt(Γ0)*Id ⊗ σ0p,
         sqrt(Γ1)*Id ⊗ σ1p,
         sqrt(Γl)*Id ⊗ σlp,
-        sqrt(Γr)*Id ⊗ σlr,
+        sqrt(Γr)*Id ⊗ σlr
     ]
     return operators
 end;
-
 
 @inline function get_V(sample1, sample2, ωr, ωz, atom_motion, free_motion, c6, eps = 1e-18)
     X1, Y1, Z1 = get_atom_trajectories(sample1, ωr, ωz, atom_motion, free_motion)[1:3]
@@ -22,37 +21,35 @@ end;
     return V
 end
 
-
 @inline function GenerateHamiltonianTwo(
-    sample1,
-    sample2,
-    ωr,
-    ωz,
-    free_motion,
-    atom_motion,
-    tspan_noise,
-    f,
-    nodes,
-    red_laser_phase_amplitudes,
-    blue_laser_phase_amplitudes,
-    red_laser_params,
-    blue_laser_params,
-    ϕr,
-    ϕb,
-    Δ0,
-    δ0,
-    c6,
+        sample1,
+        sample2,
+        ωr,
+        ωz,
+        free_motion,
+        atom_motion,
+        tspan_noise,
+        f,
+        nodes,
+        red_laser_phase_amplitudes,
+        blue_laser_phase_amplitudes,
+        red_laser_params,
+        blue_laser_params,
+        ϕr,
+        ϕb,
+        Δ0,
+        δ0,
+        c6
 )
-
     operators_two = [operators .⊗ [Id]; [Id] .⊗ operators; nr ⊗ nr];
     coefficients_two = Vector{Function}();
     # coefficients_two = [];
     samples = [sample1, sample2]
 
     # Trajectories
-    for i = 1:2
-        X, Y, Z, Vx, Vy, Vz =
-            get_atom_trajectories(samples[i], ωr, ωz, atom_motion, free_motion);
+    for i in 1:2
+        X, Y, Z, Vx,
+        Vy, Vz = get_atom_trajectories(samples[i], ωr, ωz, atom_motion, free_motion);
 
         # Generate phase noise traces for red and blue lasers
         ϕ_red_res = ϕ(tspan_noise, f, red_laser_phase_amplitudes);
@@ -62,22 +59,20 @@ end
         ϕ_red = interpolate(nodes, ϕ_red_res, Gridded(Linear()));
         ϕ_blue = interpolate(nodes, ϕ_blue_res, Gridded(Linear()));
 
-
         # Hamiltonian params trajectories
         Ωr = t -> exp(1.0im * (ϕ_red(t) + ϕr(t))) * Ω(X(t), Y(t), Z(t), red_laser_params);
         Ωb = t -> exp(1.0im * (ϕ_blue(t) + ϕb(t))) * Ω(X(t), Y(t), Z(t), blue_laser_params);
 
-        coefficients_two = [
-            coefficients_two;
-            [
-                t -> Δ(Vx(t), Vz(t), red_laser_params) - Δ0,
-                t -> δ(Vx(t), Vz(t), red_laser_params, blue_laser_params) - δ0,
-                t -> Ωr(t) / 2.0,
-                t -> conj(Ωr(t)) / 2.0,
-                t -> Ωb(t) / 2.0,
-                t -> conj(Ωb(t)) / 2.0,
-            ]
-        ];
+        coefficients_two = [coefficients_two;
+                            [
+                                t -> Δ(Vx(t), Vz(t), red_laser_params) - Δ0,
+                                t -> δ(Vx(t), Vz(t), red_laser_params, blue_laser_params) -
+                                     δ0,
+                                t -> Ωr(t) / 2.0,
+                                t -> conj(Ωr(t)) / 2.0,
+                                t -> Ωb(t) / 2.0,
+                                t -> conj(Ωb(t)) / 2.0
+                            ]];
     end;
     V = get_V(sample1, sample2, ωr, ωz, atom_motion, free_motion, c6)
     push!(coefficients_two, V)
@@ -86,19 +81,18 @@ end
     return H
 end;
 
-
 """
 To compensate for non-ideal blockade we have to correct ΔtoΩ as ΔtoΩ - Ω/2V
 
 Here we average V over atom temperature and get
 """
 function get_blockade_stark_shift_factor(
-    trap_params,
-    atom_params,
-    atom_centers,
-    Ω,
-    c6,
-    n_samples = 10000,
+        trap_params,
+        atom_params,
+        atom_centers,
+        Ω,
+        c6,
+        n_samples = 10000
 )
     shift1, shift2 = [[atom_centers[1]; zeros(3)]], [[atom_centers[2]; zeros(3)]]
     samples1 = samples_generate(trap_params, atom_params, n_samples; harmonic = true)[1]
@@ -108,23 +102,22 @@ function get_blockade_stark_shift_factor(
 
     Rm6 = mean(
         map(
-            (s1, s2) -> 1.0 / (1e-18 + sum((s1[1:3] - s2[1:3]) .^ 2)^3),
-            samples1,
-            samples2,
-        ),
+        (s1, s2) -> 1.0 / (1e-18 + sum((s1[1:3] - s2[1:3]) .^ 2)^3),
+        samples1,
+        samples2
+    ),
     )
 
     return - Ω / (2.0 * c6 * Rm6)
 end
 
-
 function simulation_czlp(cfg::CZLPConfig; ode_kwargs...)
     # Generate samples of atoms and shift their centers
     shift1, shift2 = [[cfg.atom_centers[1]; zeros(3)]], [[cfg.atom_centers[2]; zeros(3)]]
-    samples1 =
-        samples_generate(cfg.trap_params, cfg.atom_params, cfg.n_samples; harmonic = true)[1]
-    samples2 =
-        samples_generate(cfg.trap_params, cfg.atom_params, cfg.n_samples; harmonic = true)[1]
+    samples1 = samples_generate(
+        cfg.trap_params, cfg.atom_params, cfg.n_samples; harmonic = true)[1]
+    samples2 = samples_generate(
+        cfg.trap_params, cfg.atom_params, cfg.n_samples; harmonic = true)[1]
     samples1 .+= shift1
     samples2 .+= shift2
 
@@ -133,14 +126,12 @@ function simulation_czlp(cfg::CZLPConfig; ode_kwargs...)
     Δ0, δ0 = cfg.detuning_params;
     τ = cfg.tspan[end] / 2.0;
 
-    tspan_noise = [0.0:(cfg.tspan[end]/1000):cfg.tspan[end];];
+    tspan_noise = [0.0:(cfg.tspan[end] / 1000):cfg.tspan[end];];
     nodes = (tspan_noise,);
-    red_laser_phase_amplitudes =
-        cfg.laser_noise ? cfg.red_laser_phase_amplitudes :
-        zero(cfg.red_laser_phase_amplitudes);
-    blue_laser_phase_amplitudes =
-        cfg.laser_noise ? cfg.blue_laser_phase_amplitudes :
-        zero(cfg.blue_laser_phase_amplitudes);
+    red_laser_phase_amplitudes = cfg.laser_noise ? cfg.red_laser_phase_amplitudes :
+                                 zero(cfg.red_laser_phase_amplitudes);
+    blue_laser_phase_amplitudes = cfg.laser_noise ? cfg.blue_laser_phase_amplitudes :
+                                  zero(cfg.blue_laser_phase_amplitudes);
     ϕb = t -> 0.0;
     ϕr = t -> t < τ ? 0.0 : cfg.ξ;
 
@@ -151,10 +142,10 @@ function simulation_czlp(cfg::CZLPConfig; ode_kwargs...)
 
     ρ0 = cfg.ψ0 ⊗ dagger(cfg.ψ0);
     #Density matrix averaged over realizations of laser noise and atom dynamics.
-    ρ = [zero(ρ0) for _ = 1:length(cfg.tspan)];
-    ρt = [zero(ρ0) for _ = 1:length(cfg.tspan)];
+    ρ = [zero(ρ0) for _ in 1:length(cfg.tspan)];
+    ρt = [zero(ρ0) for _ in 1:length(cfg.tspan)];
     #Second moment for error estimation of level populations.
-    ρ2 = [zero(ρ0) for _ = 1:length(cfg.tspan)];
+    ρ2 = [zero(ρ0) for _ in 1:length(cfg.tspan)];
 
     for i in ProgressBars.ProgressBar(1:cfg.n_samples)
         H = GenerateHamiltonianTwo(
@@ -175,7 +166,7 @@ function simulation_czlp(cfg::CZLPConfig; ode_kwargs...)
             ϕb,
             Δ0,
             δ0,
-            cfg.c6,
+            cfg.c6
         )
 
         ρt = timeevolution.master_dynamic(cfg.tspan, ρ0, H, J; ode_kwargs...)[2];
@@ -183,7 +174,6 @@ function simulation_czlp(cfg::CZLPConfig; ode_kwargs...)
         ρ .+= ρt
         ρ2 .+= ρt .^ 2
     end;
-
 
     return ρ ./ cfg.n_samples, ρ2 ./ cfg.n_samples;
 end

@@ -13,21 +13,20 @@ function Ω_blue(x, y, z, laser_params)
 end;
 
 function simulation_blue_intens(
-    tspan,
-    ψ0,
-    atom_params,
-    trap_params,
-    samples,
-    red_laser_params,
-    blue_laser_params,
-    detuning_params,
-    decay_params;
-    atom_motion = true,
-    free_motion = true,
-    spontaneous_decay = true,
-    parallel = false,
+        tspan,
+        ψ0,
+        atom_params,
+        trap_params,
+        samples,
+        red_laser_params,
+        blue_laser_params,
+        detuning_params,
+        decay_params;
+        atom_motion = true,
+        free_motion = true,
+        spontaneous_decay = true,
+        parallel = false
 )
-
     N = length(samples);
     ωr, ωz = trap_frequencies(atom_params, trap_params);
     Δ0, δ0 = detuning_params;
@@ -44,13 +43,13 @@ function simulation_blue_intens(
     ρ0 = ψ0 ⊗ dagger(ψ0);
 
     #Density matrix averaged over realizations of laser noise and atom dynamics.
-    ρ_mean = [zero(ψ0 ⊗ dagger(ψ0)) for _ ∈ 1:length(tspan)];
-    ρ_temp = [zero(ψ0 ⊗ dagger(ψ0)) for _ ∈ 1:length(tspan)];
+    ρ_mean = [zero(ψ0 ⊗ dagger(ψ0)) for _ in 1:length(tspan)];
+    ρ_temp = [zero(ψ0 ⊗ dagger(ψ0)) for _ in 1:length(tspan)];
 
     #Second moment for error estimation of level populations.
-    ρ2_mean = [zero(ψ0 ⊗ dagger(ψ0)) for _ ∈ 1:length(tspan)];
+    ρ2_mean = [zero(ψ0 ⊗ dagger(ψ0)) for _ in 1:length(tspan)];
 
-    for i ∈ 1:N
+    for i in 1:N
         if atom_motion
             #Atom initial conditions
             xi, yi, zi, vxi, vyi, vzi = samples[i];
@@ -64,23 +63,20 @@ function simulation_blue_intens(
         Z = t -> R(t, zi, vzi, ωz; free = free_motion);
         Vz = t -> V(t, zi, vzi, ωz; free = free_motion);
 
-        #Hamiltonian params trajectories
+        # Hamiltonian params trajectories
         Ht = TimeDependentSum(
-            [
-                t -> -Δ(Vz(t), red_laser_params) - Δ0;
-                t ->
-                    -δ(
-                        Vz(t),
-                        red_laser_params,
-                        blue_laser_params[1:3];
-                        parallel = parallel,
-                    ) - δ0;
-                t -> Ω_red(red_laser_params) / 2.0;
-                t -> conj(Ω_red(red_laser_params) / 2.0);
-                t -> Ω_blue(X(t), Y(t), Z(t), blue_laser_params) / 2.0;
-                t -> conj(Ω_blue(X(t), Y(t), Z(t), blue_laser_params) / 2.0);
-            ],
-            operators,
+            [t -> -Δ(Vz(t), red_laser_params) - Δ0;
+             t -> -δ(
+                 Vz(t),
+                 red_laser_params,
+                 blue_laser_params[1:3];
+                 parallel = parallel
+             ) - δ0;
+             t -> Ω_red(red_laser_params) / 2.0;
+             t -> conj(Ω_red(red_laser_params) / 2.0);
+             t -> Ω_blue(X(t), Y(t), Z(t), blue_laser_params) / 2.0;
+             t -> conj(Ω_blue(X(t), Y(t), Z(t), blue_laser_params) / 2.0);],
+            operators
         );
 
         # #Returns hamiltonian and jump operators in a form required by timeevolution.master_dynamic
