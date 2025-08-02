@@ -2,8 +2,8 @@ repos:
   - repo: https://github.com/qiaojunfeng/pre-commit-julia-format
     rev: v0.2.0
     hooks:
-    - id: julia-format
-      args: .
+      - id: julia-format
+        args: [.]
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.6.0
     hooks:
