@@ -19,14 +19,14 @@ atom_params = [m, T];
 
 # Simulation parameters
 tspan = [0.0:1.0:50.0;];
-N = 10000 
+N = 10000
 
 # Calculate recapture probabilities
 probs, acc_rate = release_recapture(
-    tspan, 
-    trap_params, 
-    atom_params, 
-    N; 
+    tspan,
+    trap_params,
+    atom_params,
+    N;
     harmonic=false);
 
 # Plot release and recapture curve
@@ -49,7 +49,7 @@ using QuantumOptics
 using Plots
 
 
-m = 86.9091835;   
+m = 86.9091835;
 T = 50.0;
 U0 = 1000.0;
 w0 = 1.1;
@@ -57,7 +57,7 @@ w0 = 1.1;
 M2 = 1.3;
 z0 = w0_to_z0(w0, λ0, M2);
 atom_params = [m, T];
-trap_params = [U0, w0, z0];    
+trap_params = [U0, w0, z0];
 
 nothing #hide
 ```
@@ -146,24 +146,24 @@ Finally, we are ready to run our simulation. As a result, we receive density mat
 ```@example rydberg
 ψ0 = g1;
 
-ρ_mean, ρ2_mean = 
+ρ_mean, ρ2_mean =
     simulation(
-        tspan, ψ0, 
-        
+        tspan, ψ0,
+
         atom_params,
         trap_params,
         samples,
-        
+
         f,
         red_laser_phase_amplitudes,
         blue_laser_phase_amplitudes,
-        
+
         red_laser_params,
         blue_laser_params,
-        
+
         detuning_params,
         decay_params;
-        
+
         spontaneous_decay=true,
         atom_motion=true,
         laser_noise=true,
@@ -178,16 +178,16 @@ Now we can average density matrix over projectors on system states and plot Rabi
 
 ```@example rydberg
 # Take average of state populations over density matrix
-Pg = real(expect(g1 ⊗ dagger(g1), ρ_mean)); 
-Pp = real(expect(p1 ⊗ dagger(p1), ρ_mean)); 
+Pg = real(expect(g1 ⊗ dagger(g1), ρ_mean));
+Pp = real(expect(p1 ⊗ dagger(p1), ρ_mean));
 Pr = real(expect(r1 ⊗ dagger(r1), ρ_mean));
 
 # Plot Rabi oscillations
 plot(
-    tspan, 
-    [Pg Pp Pr], 
-    label=["Ground" "Intermediate" "Rydberg"], 
-    width=[3 3 3], 
+    tspan,
+    [Pg Pp Pr],
+    label=["Ground" "Intermediate" "Rydberg"],
+    width=[3 3 3],
     color=["blue" "gray" "red"]
     )
 plot!(legend=:outertop, legendcolumns=3)
