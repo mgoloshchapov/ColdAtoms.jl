@@ -66,7 +66,7 @@ end
 
 function get_rydberg_infidelity(
     cfg::RydbergConfig;
-    U=dense(identityoperator(ColdAtoms.basis)), 
+    U=dense(identityoperator(basis)), 
     states=basis_fidelity_states, 
     n_samples=100,
     ode_kwargs...)
@@ -156,7 +156,7 @@ function get_parity_fidelity(cfg::CZLPConfig; ode_kwargs...)
     # cfg_parity.ψ0 = ket_ipos ⊗ ket_pos
     # ρ2 = simulation_czlp(cfg_parity; ode_kwargs...)[1][end]
 
-    Had = Id ⊗ ColdAtoms.Hadamard
+    Had = Id ⊗ Hadamard
     # ρ1 .=  Had * ρ1 * dagger(Had)
     # ρ2 .=  Had * ρ2 * dagger(Had)
 
@@ -164,7 +164,7 @@ function get_parity_fidelity(cfg::CZLPConfig; ode_kwargs...)
     Phi_ip = (ket_0 ⊗ ket_0 + 1.0im * ket_1 ⊗ ket_1)/sqrt(2)
 
     ϕ_list = [0.0:0.0001:2π;];
-    global_RZ = ϕ -> ColdAtoms.RZ(ϕ) ⊗ ColdAtoms.RZ(ϕ);
+    global_RZ = ϕ -> RZ(ϕ) ⊗ RZ(ϕ);
 
     F_list_1 = [real(dagger(Phi_p)  * Had * global_RZ(ϕ) * ρ1 * dagger(Had * global_RZ(ϕ)) * Phi_p) for ϕ in ϕ_list];
     # F_list_2 = [real(dagger(Phi_ip) * Had * global_RZ(ϕ) * ρ2 * dagger(Had * global_RZ(ϕ)) * Phi_ip) for ϕ in ϕ_list];
@@ -177,9 +177,9 @@ end
 
 
 function get_parity_fidelity_temp(ρ, ϕ_RZ)
-    Had = Id ⊗ ColdAtoms.Hadamard
+    Had = Id ⊗ Hadamard
 
-    global_RZ = ColdAtoms.RZ(ϕ_RZ) ⊗ ColdAtoms.RZ(ϕ_RZ);
+    global_RZ = RZ(ϕ_RZ) ⊗ RZ(ϕ_RZ);
     ρt = global_RZ * ρ * dagger(global_RZ);
     ρt = Had * ρt * dagger(Had)
 
@@ -201,7 +201,7 @@ function get_cz_infidelity(
 
     ket_pos = (ket_0 + ket_1) / sqrt(2)
     Φp = (ket_0 ⊗ ket_0 + ket_1 ⊗ ket_1)/sqrt(2);
-    Had = Id ⊗ ColdAtoms.Hadamard
+    Had = Id ⊗ Hadamard
     
     cfg_t = deepcopy(cfg)
     cfg_t.spontaneous_decay_intermediate    = false
@@ -212,7 +212,7 @@ function get_cz_infidelity(
 
     println("Measuring error from calibration...")
     ϕ_RZ = get_parity_fidelity(cfg_t)[3];
-    global_RZ = ColdAtoms.RZ(ϕ_RZ) ⊗ ColdAtoms.RZ(ϕ_RZ);
+    global_RZ = RZ(ϕ_RZ) ⊗ RZ(ϕ_RZ);
 
     cfg_t.ψ0 = ket_pos ⊗ ket_pos
     ρ_real = simulation_czlp(cfg_t)[1][end]

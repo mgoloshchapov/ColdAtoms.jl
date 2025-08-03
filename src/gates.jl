@@ -1,5 +1,5 @@
 function get_gate(U)
-    op = dense(identityoperator(ColdAtoms.basis))
+    op = dense(identityoperator(basis))
     op.data[1:2, 1:2] = U 
     return op
 end

@@ -165,8 +165,8 @@ end
 # function calibrate_rabi(trap_params, atom_params, laser_params; n_samples=1000)
 #     Ω, w, z, θ, n = laser_params
 #     samples = samples_generate(trap_params, atom_params, n_samples)[1]
-#     Ω_samples = [ColdAtoms.A(sample[1], sample[2], sample[3], w, z; n=n, θ=θ) for sample in samples];
-#     Ω2_samples = [ColdAtoms.A(sample[1], sample[2], sample[3], w, z; n=n, θ=θ)^2 for sample in samples];
+#     Ω_samples = [A(sample[1], sample[2], sample[3], w, z; n=n, θ=θ) for sample in samples];
+#     Ω2_samples = [A(sample[1], sample[2], sample[3], w, z; n=n, θ=θ)^2 for sample in samples];
 #     factor = sum(Ω_samples) / length(Ω_samples)
 #     factor2 = sqrt(sum(Ω_samples^2) / length(Ω_samples))
 #     return factor, factor2
