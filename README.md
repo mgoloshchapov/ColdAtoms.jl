@@ -1,4 +1,4 @@
-<img src="https://github.com/mgoloshchapov/ColdAtoms.jl/blob/main/docs/src/assets/logo.png" alt="logo" width="150" height="165">
+<img src="https://github.com/mgoloshchapov/NeutralAtoms.jl/blob/main/docs/src/assets/logo.png" alt="logo" width="150" height="165">
 
 # NeutralAtoms.jl
 
