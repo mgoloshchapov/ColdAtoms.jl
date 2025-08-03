@@ -102,7 +102,7 @@ function plot_rydberg_infidelity(
     title="Error budget for 2π pulse",
     blue=true)
 
-    red_color = RGBA(207.0/255, 71.0/255, 80.0/255, 1.0)
+    red_color  = RGBA(207.0/255, 71.0/255, 80.0/255, 1.0)
     blue_color = RGBA(135.0/255,203.0/255,230.0/255,1.0)
     if blue
         color = blue_color 

@@ -1,6 +1,6 @@
 name = "ColdAtoms"
 uuid = "a4a6137b-c86d-4c79-adc4-1660e24cdd31"
-authors = ["Mikhail Goloshchapov"]
+authors = ["Mikhail Goloshchapov", "Artem Gordeev"]
 version = "0.1.0-DEV"
 
 [deps]
