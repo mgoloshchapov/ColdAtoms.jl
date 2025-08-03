@@ -12,7 +12,7 @@ This package provides a set of tools to simulate experiments with neutral atoms.
 
 Paste the following line into the Julia REPL:
 ```
-]add "https://github.com/mgoloshchapov/ColdAtoms.jl"
+]add "https://github.com/mgoloshchapov/NeutralAtoms.jl"
 ```
 or
 ```julia
