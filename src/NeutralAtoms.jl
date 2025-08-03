@@ -1,4 +1,4 @@
-module ColdAtoms
+module NeutralAtoms
 using Distributed
 
 using Distributions, Random

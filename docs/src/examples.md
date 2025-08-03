@@ -7,7 +7,7 @@ Release and recapture method is used to measure temperature of single neutral at
 The trap is turned off by a variable amount of time and probability to recapture atom is measured. If we know atom mass and trap parameters, we can extract atom temperature by comparing experimental release and recapture curve with the modelling.
 
 ```@example
-using ColdAtoms
+using NeutralAtoms
 using Plots
 
 # Atom and trap parameters
@@ -44,7 +44,7 @@ Two-photon Rydberg excitation is used, for example, to implement native CZ gate 
 Import necessary modules and specify atom and trap parameters.
 
 ```@example rydberg
-using ColdAtoms
+using NeutralAtoms
 using QuantumOptics
 using Plots
 

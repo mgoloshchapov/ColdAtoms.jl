@@ -1,4 +1,4 @@
-using ColdAtoms
+using NeutralAtoms
 using QuantumOptics
 using Serialization
 

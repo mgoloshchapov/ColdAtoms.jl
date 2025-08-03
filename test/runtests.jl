@@ -1,6 +1,6 @@
-# using ColdAtoms
+# using NeutralAtoms
 # using Test
 
-# @testset "ColdAtoms.jl" begin
+# @testset "NeutralAtoms.jl" begin
 #     # Write your tests here.
 # end
