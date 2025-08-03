@@ -1,9 +1,9 @@
 <img src="https://github.com/mgoloshchapov/ColdAtoms.jl/blob/main/docs/src/assets/logo.png" alt="logo" width="150" height="165">
 
-# ColdAtoms.jl
+# NeutralAtoms.jl
 
-[![Build Status](https://github.com/mgoloshchapov/ColdAtoms.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/mgoloshchapov/ColdAtoms.jl/actions/workflows/CI.yml?query=branch%3Amain)
-[![docs](https://img.shields.io/badge/docs-latest-blue.svg)](https://mgoloshchapov.github.io/ColdAtoms.jl/dev/)
+[![Build Status](https://github.com/mgoloshchapov/NeutralAtoms.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/mgoloshchapov/NeutralAtoms.jl/actions/workflows/CI.yml?query=branch%3Amain)
+[![docs](https://img.shields.io/badge/docs-latest-blue.svg)](https://mgoloshchapov.github.io/NeutralAtoms.jl/dev/)
 
 
 This package provides a set of tools to simulate experiments with neutral atoms. 
@@ -16,7 +16,7 @@ Paste the following line into the Julia REPL:
 ```
 or
 ```julia
-using Pkg; Pkg.add(PackageSpec(url="https://github.com/mgoloshchapov/ColdAtoms.jl"))
+using Pkg; Pkg.add(PackageSpec(url="https://github.com/mgoloshchapov/NeutralAtoms.jl"))
 ```
 
 
